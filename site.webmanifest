@@ -1,0 +1,14 @@
+{
+  "name": "HammadifyDigital Tools",
+  "short_name": "HammadifyDigital",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fbfaf7",
+  "theme_color": "#07131a",
+  "icons": [{
+    "src": "/logo.svg",
+    "sizes": "96x96",
+    "type": "image/svg+xml",
+    "purpose": "any maskable"
+  }]
+}
