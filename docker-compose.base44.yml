@@ -1,0 +1,23 @@
+# Base44 sandbox/dev environment for the HammadifyDigital Tools static storefront.
+#
+# The app has no build step and no runtime dependencies: it is plain HTML/CSS/JS
+# served straight from the repo root. We therefore run a tiny static file server
+# on a plain Python image with the repo bind-mounted, so edits to index.html /
+# app.js / styles.css are visible on refresh without rebuilding anything.
+services:
+  site:
+    image: python:3.12-slim
+    working_dir: /app
+    command: ["python3", "-m", "http.server", "3000", "--bind", "0.0.0.0"]
+    volumes:
+      - ./:/app
+    ports:
+      - "3000:3000"
+    restart: on-failure
+    healthcheck:
+      # Real request against the served site (index.html), not just an open port.
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request as u; u.urlopen('http://127.0.0.1:3000/index.html', timeout=3)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
