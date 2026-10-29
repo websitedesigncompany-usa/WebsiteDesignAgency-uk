@@ -1,0 +1,36 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Cloudflare — static assets on the edge, API proxied to a persistent host.
+#
+# Why not a Worker running the API: the API is Express + better-sqlite3.
+# workerd has no native modules, so SQLite cannot run there at all. The Worker
+# (or Pages Functions) serves the 16,000-page static build and proxies
+# /api, /admin and /uploads to a long-lived Node host with a real disk.
+#
+# File count: this build produces ~16,300 files. Cloudflare Pages allows
+# 20,000 per deployment on the free plan, 100,000+ on paid — it fits, but
+# leave headroom if you raise BUILD_POSTS_PER_LOCATION.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name = "website-design-company"
+main = "worker/index.ts"
+compatibility_date = "2025-01-01"
+
+# The stateful Node service. Set API_ORIGIN when deploying.
+[vars]
+API_ORIGIN = "https://api.websitedesigncompany.site"
+
+# Attach the custom domain after the first deploy (or uncomment and set here):
+# [[routes]]
+# pattern = "websitedesigncompany.site"
+# custom_domain = true
+#
+# [[routes]]
+# pattern = "www.websitedesigncompany.site"
+# custom_domain = true
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
+[observability]
+enabled = true
