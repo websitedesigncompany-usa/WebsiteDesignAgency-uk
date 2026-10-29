@@ -1,0 +1,84 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Netlify — static site on the CDN, API proxied to a persistent Node host.
+#
+# Why a proxy and not Netlify Functions: the API uses SQLite for sessions,
+# leads and orders. Serverless filesystems are ephemeral, so leads and orders
+# would vanish on every cold start. The proxy keeps the browser on one origin
+# (so cookies and CSRF keep working) while the stateful Node service runs on a
+# host with a persistent volume.
+# ─────────────────────────────────────────────────────────────────────────────
+
+[build]
+  command = "npm run build:deploy"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  BUILD_POSTS_PER_LOCATION = "3"
+  BUILD_CASES_PER_LOCATION = "1"
+  BUILD_CITY_PAGES = "1"
+  SITE_ORIGIN = "https://www.websitedesigncompany.site"
+
+[dev]
+  command = "npm run dev"
+  targetPort = 4000
+  port = 8888
+  framework = "#custom"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://api.websitedesigncompany.site/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/admin/*"
+  to = "https://api.websitedesigncompany.site/admin/:path*"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/uploads/*"
+  to = "https://api.websitedesigncompany.site/uploads/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/:splat/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate"
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/sitemap*.xml"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/llms*.txt"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/checkout/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, follow"

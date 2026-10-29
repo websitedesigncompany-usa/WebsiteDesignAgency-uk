@@ -1,0 +1,52 @@
+{
+  "name": "website-design-company",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Website Design Company \u2014 full-stack multi-region digital agency platform (SSG + Express + SQLite CMS)",
+  "scripts": {
+    "dev": "tsx watch src/server/index.ts",
+    "build": "npm run build:css && tsx src/build/index.ts",
+    "build:css": "tailwindcss -i ./src/styles/tailwind.css -o ./public/assets/css/app.css --minify",
+    "build:css:dev": "tailwindcss -i ./src/styles/tailwind.css -o ./public/assets/css/app.css",
+    "typecheck": "tsc --noEmit",
+    "start": "NODE_ENV=production tsx src/server/index.ts",
+    "seed": "tsx src/db/seed.ts",
+    "db:reset": "rm -f data/app.db && tsx src/db/seed.ts",
+    "qa": "tsx src/build/qa.ts",
+    "serve": "NODE_ENV=production tsx src/server/index.ts",
+    "verify": "npm run build && npm run qa",
+    "build:deploy": "npm run build:css && SITE_ORIGIN=${SITE_ORIGIN:-https://www.websitedesigncompany.site} tsx src/build/index.ts",
+    "dev:api": "tsx watch src/server/index.ts",
+    "preview": "BUILD_POSTS_PER_LOCATION=1 BUILD_CASES_PER_LOCATION=1 BUILD_CITY_PAGES=0 npm run build && npm start",
+    "deploy:vercel": "npx vercel --prod",
+    "deploy:netlify": "npx netlify deploy --prod --dir=dist",
+    "deploy:cloudflare": "npx wrangler deploy",
+    "test:tools": "node tooltest.mjs",
+    "package": "node scripts/package-delivery.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.7.0",
+    "compression": "^1.7.5",
+    "cookie-parser": "^1.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/compression": "^1.7.5",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/express": "^4.17.21",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.10.2",
+    "jsdom": "^29.1.1",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "wrangler": "^3.99.0"
+  }
+}
