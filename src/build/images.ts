@@ -16,6 +16,11 @@ import { SITE } from '../config/site.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /** The client's supplied brand logo — the source of every logo variant. */
 const BRAND_LOGO = path.resolve(__dirname, '../assets/brand-logo.png');
+/**
+ * Base64 copy of the same logo. Some transports cannot carry binary files, so
+ * the build falls back to this when the PNG itself is missing.
+ */
+const BRAND_LOGO_B64 = path.resolve(__dirname, '../assets/brand-logo.base64.txt');
 
 const CY = '#22D3EE';
 const VI = '#7C3AED';
@@ -115,7 +120,14 @@ export async function generateImages(outDir: string): Promise<void> {
   try {
     brandSource = await readFile(BRAND_LOGO);
   } catch {
-    console.warn('  ! brand-logo.png not found — falling back to the generated mark');
+    try {
+      const encoded = await readFile(BRAND_LOGO_B64, 'utf8');
+      const b64 = encoded.split('\n').filter((l) => l && !l.startsWith('#')).join('');
+      brandSource = Buffer.from(b64, 'base64');
+      console.log('  · brand-logo.png missing — restored it from brand-logo.base64.txt');
+    } catch {
+      console.warn('  ! brand-logo.png not found — falling back to the generated mark');
+    }
   }
 
   const brandSquare = async (size: number): Promise<Buffer> =>
