@@ -1,0 +1,818 @@
+{
+  "generatedAt": "2026-11-07T17:48:21.047Z",
+  "total": 1016,
+  "passing": 1016,
+  "failing": 0,
+  "rules": {
+    "titleMax": 60,
+    "descriptionMin": 101,
+    "descriptionMax": 159,
+    "keywordDensity": {
+      "min": 1.5,
+      "max": 2
+    }
+  },
+  "issues": [],
+  "sample": [
+    {
+      "path": "/",
+      "type": "home",
+      "title": 41,
+      "desc": 159,
+      "density": 0.18,
+      "issues": []
+    },
+    {
+      "path": "/website-design-services/",
+      "type": "service",
+      "title": 48,
+      "desc": 148,
+      "density": 0.81,
+      "issues": []
+    },
+    {
+      "path": "/website-development/",
+      "type": "service",
+      "title": 53,
+      "desc": 156,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/wordpress-website-design/",
+      "type": "service",
+      "title": 49,
+      "desc": 140,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/ecommerce-website-design/",
+      "type": "service",
+      "title": 49,
+      "desc": 148,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/shopify-website-design/",
+      "type": "service",
+      "title": 47,
+      "desc": 150,
+      "density": 0.71,
+      "issues": []
+    },
+    {
+      "path": "/woocommerce-website-design/",
+      "type": "service",
+      "title": 51,
+      "desc": 143,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/landing-page-design/",
+      "type": "service",
+      "title": 44,
+      "desc": 148,
+      "density": 0.69,
+      "issues": []
+    },
+    {
+      "path": "/3d-website-design/",
+      "type": "service",
+      "title": 42,
+      "desc": 131,
+      "density": 0.88,
+      "issues": []
+    },
+    {
+      "path": "/website-maintenance/",
+      "type": "service",
+      "title": 53,
+      "desc": 152,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/web-hosting-services/",
+      "type": "service",
+      "title": 45,
+      "desc": 144,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/logo-design-services/",
+      "type": "service",
+      "title": 45,
+      "desc": 145,
+      "density": 0.79,
+      "issues": []
+    },
+    {
+      "path": "/3d-logo-design/",
+      "type": "service",
+      "title": 39,
+      "desc": 131,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/branding-services/",
+      "type": "service",
+      "title": 42,
+      "desc": 144,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/print-design-services/",
+      "type": "service",
+      "title": 46,
+      "desc": 147,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/seo-services/",
+      "type": "service",
+      "title": 37,
+      "desc": 130,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/local-seo-services/",
+      "type": "service",
+      "title": 43,
+      "desc": 133,
+      "density": 0.68,
+      "issues": []
+    },
+    {
+      "path": "/ecommerce-seo-services/",
+      "type": "service",
+      "title": 47,
+      "desc": 146,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/technical-seo-services/",
+      "type": "service",
+      "title": 47,
+      "desc": 158,
+      "density": 0.71,
+      "issues": []
+    },
+    {
+      "path": "/seo-geo-aeo-services/",
+      "type": "service",
+      "title": 49,
+      "desc": 145,
+      "density": 0.75,
+      "issues": []
+    },
+    {
+      "path": "/link-building-services/",
+      "type": "service",
+      "title": 47,
+      "desc": 142,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/off-page-seo-services/",
+      "type": "service",
+      "title": 46,
+      "desc": 152,
+      "density": 0.77,
+      "issues": []
+    },
+    {
+      "path": "/seo-audit-services/",
+      "type": "service",
+      "title": 43,
+      "desc": 150,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/core-web-vitals-optimization/",
+      "type": "service",
+      "title": 53,
+      "desc": 146,
+      "density": 0.79,
+      "issues": []
+    },
+    {
+      "path": "/google-business-profile-management/",
+      "type": "service",
+      "title": 59,
+      "desc": 149,
+      "density": 0.69,
+      "issues": []
+    },
+    {
+      "path": "/reputation-management/",
+      "type": "service",
+      "title": 55,
+      "desc": 148,
+      "density": 0.78,
+      "issues": []
+    },
+    {
+      "path": "/app-store-optimization/",
+      "type": "service",
+      "title": 56,
+      "desc": 149,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/ppc-advertising-services/",
+      "type": "service",
+      "title": 49,
+      "desc": 150,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/google-ads-management/",
+      "type": "service",
+      "title": 46,
+      "desc": 150,
+      "density": 0.79,
+      "issues": []
+    },
+    {
+      "path": "/meta-ads-management/",
+      "type": "service",
+      "title": 44,
+      "desc": 142,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/content-marketing-services/",
+      "type": "service",
+      "title": 51,
+      "desc": 153,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/content-writing-services/",
+      "type": "service",
+      "title": 49,
+      "desc": 158,
+      "density": 0.76,
+      "issues": []
+    },
+    {
+      "path": "/seo-content-writing-services/",
+      "type": "service",
+      "title": 53,
+      "desc": 158,
+      "density": 0.79,
+      "issues": []
+    },
+    {
+      "path": "/blog-writing-services/",
+      "type": "service",
+      "title": 46,
+      "desc": 136,
+      "density": 0.68,
+      "issues": []
+    },
+    {
+      "path": "/copywriting-services/",
+      "type": "service",
+      "title": 45,
+      "desc": 123,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/ebook-design-services/",
+      "type": "service",
+      "title": 46,
+      "desc": 143,
+      "density": 0.68,
+      "issues": []
+    },
+    {
+      "path": "/graphic-design-services/",
+      "type": "service",
+      "title": 48,
+      "desc": 131,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/social-media-marketing/",
+      "type": "service",
+      "title": 56,
+      "desc": 152,
+      "density": 0.79,
+      "issues": []
+    },
+    {
+      "path": "/social-media-management/",
+      "type": "service",
+      "title": 57,
+      "desc": 151,
+      "density": 0.79,
+      "issues": []
+    },
+    {
+      "path": "/email-marketing-services/",
+      "type": "service",
+      "title": 49,
+      "desc": 139,
+      "density": 0.88,
+      "issues": []
+    },
+    {
+      "path": "/marketing-automation-services/",
+      "type": "service",
+      "title": 54,
+      "desc": 147,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/influencer-marketing-services/",
+      "type": "service",
+      "title": 54,
+      "desc": 159,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/video-production-services/",
+      "type": "service",
+      "title": 50,
+      "desc": 146,
+      "density": 0.88,
+      "issues": []
+    },
+    {
+      "path": "/video-editing-services/",
+      "type": "service",
+      "title": 47,
+      "desc": 142,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/video-animation-services/",
+      "type": "service",
+      "title": 49,
+      "desc": 142,
+      "density": 0.77,
+      "issues": []
+    },
+    {
+      "path": "/motion-graphics-animation/",
+      "type": "service",
+      "title": 50,
+      "desc": 131,
+      "density": 0.81,
+      "issues": []
+    },
+    {
+      "path": "/explainer-video-services/",
+      "type": "service",
+      "title": 49,
+      "desc": 133,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/podcast-editing-services/",
+      "type": "service",
+      "title": 49,
+      "desc": 151,
+      "density": 0.88,
+      "issues": []
+    },
+    {
+      "path": "/audio-production-services/",
+      "type": "service",
+      "title": 50,
+      "desc": 138,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/conversion-rate-optimization/",
+      "type": "service",
+      "title": 53,
+      "desc": 140,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/analytics-setup-services/",
+      "type": "service",
+      "title": 49,
+      "desc": 147,
+      "density": 0.69,
+      "issues": []
+    },
+    {
+      "path": "/web-analytics-consulting/",
+      "type": "service",
+      "title": 49,
+      "desc": 119,
+      "density": 0.81,
+      "issues": []
+    },
+    {
+      "path": "/ui-ux-design/",
+      "type": "service",
+      "title": 46,
+      "desc": 150,
+      "density": 0.81,
+      "issues": []
+    },
+    {
+      "path": "/mobile-app-development/",
+      "type": "service",
+      "title": 47,
+      "desc": 139,
+      "density": 0.73,
+      "issues": []
+    },
+    {
+      "path": "/custom-software-development/",
+      "type": "service",
+      "title": 52,
+      "desc": 150,
+      "density": 0.88,
+      "issues": []
+    },
+    {
+      "path": "/ai-integration-services/",
+      "type": "service",
+      "title": 48,
+      "desc": 133,
+      "density": 0.69,
+      "issues": []
+    },
+    {
+      "path": "/chatbot-development/",
+      "type": "service",
+      "title": 53,
+      "desc": 153,
+      "density": 0.68,
+      "issues": []
+    },
+    {
+      "path": "/public-relations-services/",
+      "type": "service",
+      "title": 50,
+      "desc": 139,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/crm-integration-services/",
+      "type": "service",
+      "title": 49,
+      "desc": 143,
+      "density": 0.78,
+      "issues": []
+    },
+    {
+      "path": "/web-security-services/",
+      "type": "service",
+      "title": 46,
+      "desc": 143,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/bespoke-website-design/",
+      "type": "service",
+      "title": 56,
+      "desc": 154,
+      "density": 0.79,
+      "issues": []
+    },
+    {
+      "path": "/mvp-development/",
+      "type": "service",
+      "title": 49,
+      "desc": 152,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/saas-development/",
+      "type": "service",
+      "title": 50,
+      "desc": 159,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/webflow-development/",
+      "type": "service",
+      "title": 53,
+      "desc": 154,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/bigcommerce-development/",
+      "type": "service",
+      "title": 57,
+      "desc": 150,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/magento-development/",
+      "type": "service",
+      "title": 53,
+      "desc": 145,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/wix-squarespace-design/",
+      "type": "service",
+      "title": 60,
+      "desc": 159,
+      "density": 0.85,
+      "issues": []
+    },
+    {
+      "path": "/corporate-website-design/",
+      "type": "service",
+      "title": 58,
+      "desc": 152,
+      "density": 0.77,
+      "issues": []
+    },
+    {
+      "path": "/social-media-optimization/",
+      "type": "service",
+      "title": 59,
+      "desc": 154,
+      "density": 0.8,
+      "issues": []
+    },
+    {
+      "path": "/guest-posting-services/",
+      "type": "service",
+      "title": 44,
+      "desc": 145,
+      "density": 0.77,
+      "issues": []
+    },
+    {
+      "path": "/domain-authority-services/",
+      "type": "service",
+      "title": 56,
+      "desc": 155,
+      "density": 0.78,
+      "issues": []
+    },
+    {
+      "path": "/call-tracking-services/",
+      "type": "service",
+      "title": 47,
+      "desc": 129,
+      "density": 0.88,
+      "issues": []
+    },
+    {
+      "path": "/white-label-services/",
+      "type": "service",
+      "title": 56,
+      "desc": 149,
+      "density": 0.79,
+      "issues": []
+    },
+    {
+      "path": "/cloud-devops-services/",
+      "type": "service",
+      "title": 50,
+      "desc": 154,
+      "density": 0.76,
+      "issues": []
+    },
+    {
+      "path": "/api-integration-services/",
+      "type": "service",
+      "title": 49,
+      "desc": 144,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/accessibility-compliance-services/",
+      "type": "service",
+      "title": 58,
+      "desc": 150,
+      "density": 0.81,
+      "issues": []
+    },
+    {
+      "path": "/international-seo-services/",
+      "type": "service",
+      "title": 51,
+      "desc": 145,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/newsletter-marketing-services/",
+      "type": "service",
+      "title": 54,
+      "desc": 128,
+      "density": 0.88,
+      "issues": []
+    },
+    {
+      "path": "/custom-erp-crm-services/",
+      "type": "service",
+      "title": 55,
+      "desc": 154,
+      "density": 0.85,
+      "issues": []
+    },
+    {
+      "path": "/website-redesign/",
+      "type": "service",
+      "title": 50,
+      "desc": 144,
+      "density": 0.79,
+      "issues": []
+    },
+    {
+      "path": "/rebranding-services/",
+      "type": "service",
+      "title": 44,
+      "desc": 135,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/logo-and-website-design/",
+      "type": "service",
+      "title": 57,
+      "desc": 150,
+      "density": 0.79,
+      "issues": []
+    },
+    {
+      "path": "/uk/website-design-services/",
+      "type": "service",
+      "title": 58,
+      "desc": 156,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/uk/website-development/",
+      "type": "service",
+      "title": 60,
+      "desc": 153,
+      "density": 0.75,
+      "issues": []
+    },
+    {
+      "path": "/uk/wordpress-website-design/",
+      "type": "service",
+      "title": 59,
+      "desc": 158,
+      "density": 0.75,
+      "issues": []
+    },
+    {
+      "path": "/uk/ecommerce-website-design/",
+      "type": "service",
+      "title": 59,
+      "desc": 156,
+      "density": 0.76,
+      "issues": []
+    },
+    {
+      "path": "/uk/shopify-website-design/",
+      "type": "service",
+      "title": 57,
+      "desc": 158,
+      "density": 0.75,
+      "issues": []
+    },
+    {
+      "path": "/uk/woocommerce-website-design/",
+      "type": "service",
+      "title": 50,
+      "desc": 151,
+      "density": 0.76,
+      "issues": []
+    },
+    {
+      "path": "/uk/landing-page-design/",
+      "type": "service",
+      "title": 54,
+      "desc": 156,
+      "density": 0.76,
+      "issues": []
+    },
+    {
+      "path": "/uk/3d-website-design/",
+      "type": "service",
+      "title": 60,
+      "desc": 149,
+      "density": 0.74,
+      "issues": []
+    },
+    {
+      "path": "/uk/website-maintenance/",
+      "type": "service",
+      "title": 60,
+      "desc": 159,
+      "density": 0.74,
+      "issues": []
+    },
+    {
+      "path": "/uk/web-hosting-services/",
+      "type": "service",
+      "title": 55,
+      "desc": 152,
+      "density": 0.73,
+      "issues": []
+    },
+    {
+      "path": "/uk/logo-design-services/",
+      "type": "service",
+      "title": 55,
+      "desc": 153,
+      "density": 0.83,
+      "issues": []
+    },
+    {
+      "path": "/uk/3d-logo-design/",
+      "type": "service",
+      "title": 57,
+      "desc": 149,
+      "density": 0.75,
+      "issues": []
+    },
+    {
+      "path": "/uk/branding-services/",
+      "type": "service",
+      "title": 60,
+      "desc": 152,
+      "density": 0.76,
+      "issues": []
+    },
+    {
+      "path": "/uk/print-design-services/",
+      "type": "service",
+      "title": 56,
+      "desc": 155,
+      "density": 0.76,
+      "issues": []
+    },
+    {
+      "path": "/uk/seo-services/",
+      "type": "service",
+      "title": 55,
+      "desc": 148,
+      "density": 0.75,
+      "issues": []
+    },
+    {
+      "path": "/uk/local-seo-services/",
+      "type": "service",
+      "title": 53,
+      "desc": 151,
+      "density": 0.72,
+      "issues": []
+    },
+    {
+      "path": "/uk/ecommerce-seo-services/",
+      "type": "service",
+      "title": 57,
+      "desc": 154,
+      "density": 0.75,
+      "issues": []
+    },
+    {
+      "path": "/uk/technical-seo-services/",
+      "type": "service",
+      "title": 57,
+      "desc": 156,
+      "density": 0.75,
+      "issues": []
+    }
+  ]
+}
