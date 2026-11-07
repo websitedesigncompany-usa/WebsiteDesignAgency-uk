@@ -15,6 +15,7 @@ import { Industry } from '../data/industries.js';
 import { Service } from '../data/services.js';
 import { PORTFOLIO, PortfolioProject } from '../data/clients.js';
 import { seededRandom, slugify, readingTime, wordCount } from '../lib/html.js';
+import { LOCAL_CONTEXT } from '../data/local-context.js';
 
 export interface CaseStudy {
   slug: string;
@@ -232,19 +233,36 @@ export function generateCaseStudy(args: GeneratedCaseArgs): CaseStudy {
 
   const resultSet = RESULT_SETS[Math.floor(seededRandom(seed + 'rs') * RESULT_SETS.length)];
 
-  const challenge = base
+  // The narrative is composed, not just picked. The template pools are small
+  // — six challenges, five approaches — so two studies drawn from the same
+  // pool came out telling the same story with a different client name. The
+  // sector context, the service being delivered and the market the work was
+  // done in are what make one study different from the next.
+  const sectorNote = `${industry.context} The trigger was ${industry.buyingTrigger.toLowerCase()}, and the objection the page had to answer head-on was ${industry.objection.replace(/"/g, "'")}`;
+
+  const serviceNote = `The engagement itself was ${service.name.toLowerCase()}: ${service.summary} What shipped was ${service.deliverables.slice(0, 3).join(', ').replace(/,([^,]*)$/, ' and$1')}.`;
+
+  const local = LOCAL_CONTEXT[country.code];
+  const marketNote = local
+    ? `The work was scoped, quoted and delivered in ${country.currency}, with the client paying by ${local.payments}. ${local.taxLabel} at ${local.taxRate} and the ${local.idLabel} were handled as part of the build rather than discovered afterwards, and the handover was documented in ${local.dateFormat} format for a team that expects it that way.`
+    : `The work was scoped, quoted and delivered in ${country.currency}, and the handover was documented for a team working in ${country.longName}.`;
+
+  const challengeBase = base
     ? base.challenge
     : interpolate(
         CHALLENGE_TEMPLATES[Math.floor(seededRandom(seed + 'ch') * CHALLENGE_TEMPLATES.length)],
         { client, location: loc, industry: industry.name.toLowerCase() },
       );
 
-  const approach = base
+  const approachBase = base
     ? base.approach
     : `${interpolate(
         APPROACH_TEMPLATES[Math.floor(seededRandom(seed + 'ap') * APPROACH_TEMPLATES.length)],
         { client, location: loc, industry: industry.name.toLowerCase(), metric: primaryMetric.toLowerCase() },
       )}`.trim();
+
+  const challenge = `${challengeBase} ${sectorNote}`;
+  const approach = `${approachBase} ${serviceNote} ${marketNote}`;
 
   const results = base
     ? base.results
@@ -256,7 +274,7 @@ export function generateCaseStudy(args: GeneratedCaseArgs): CaseStudy {
 
   const title = `${industry.name} Client in ${locShort}: ${headlineFrom(results, industry, service)}`;
 
-  const summary = `${client} came to us with a website that was not producing the enquiries they needed in ${loc}. We rebuilt it around ${primaryMetric.toLowerCase()}, and the numbers moved.`;
+  const summary = `${client} came to us with a website that was not producing the enquiries they needed in ${loc}. We rebuilt it around ${primaryMetric.toLowerCase()} — for a ${industry.name.toLowerCase()} business in ${country.longName}, that means ${industry.buyingTrigger.toLowerCase()} — and the numbers moved.`;
 
   const quote = {
     name: base ? caseStudyText(base, client, industry.slug, '').author : `${client.split(' ')[0]} ${['Whitfield', 'Rahman', 'Okafor', 'Lindqvist', 'Bello', 'Mensah', 'Kowalski', 'Nakamura'][Math.floor(seededRandom(seed + 'qn') * 8)]}`,

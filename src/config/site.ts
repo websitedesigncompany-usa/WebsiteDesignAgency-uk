@@ -105,15 +105,31 @@ export const SITE = {
 
 export const ORIGIN = SITE.origin.replace(/\/$/, '');
 
+/**
+ * Optional sub-path the site is served from.
+ *
+ * GitHub Pages serves a project site from `/<repo>/`, so every root-relative
+ * link in the rendered HTML has to carry that prefix. The canonical domain
+ * stays the real one — canonicals, sitemaps and hreflang never mention the
+ * preview host — so this only affects navigational and asset URLs.
+ */
+export const BASE_PATH = (process.env.SITE_BASE_PATH || '').trim().replace(/\/+$/, '');
+
 /** Absolute URL helper. */
 export function abs(path: string): string {
   if (!path) return `${ORIGIN}/`;
   if (/^https?:\/\//i.test(path)) return path;
-  return `${ORIGIN}${path.startsWith('/') ? '' : '/'}${path}`;
+  // A path that already carries the deployment sub-path is a canonical path
+  // for the real domain — strip the prefix so canonicals stay clean.
+  let p = path;
+  if (BASE_PATH && (p === BASE_PATH || p.startsWith(`${BASE_PATH}/`))) {
+    p = p.slice(BASE_PATH.length) || '/';
+  }
+  return `${ORIGIN}${p.startsWith('/') ? '' : '/'}${p}`;
 }
 
 /** URL for a static asset with a cache-busting fingerprint. */
 export function asset(path: string, version: string): string {
   const clean = path.replace(/^\//, '');
-  return `/assets/${clean}?v=${version}`;
+  return `${BASE_PATH}/assets/${clean}?v=${version}`;
 }
