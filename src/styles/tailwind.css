@@ -1057,6 +1057,17 @@
     will-change: transform;
   }
   .ico svg { display: block; }
+  /* Every icon is a stroked line drawing. These attributes used to be
+     repeated on each of the ~470 inline SVGs on a page; they are identical
+     every time, so they belong here. */
+  .ico svg,
+  .ico > svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
 
   /* The gradient sweep gives every icon a metallic edge on hover. */
   .ico::before {
