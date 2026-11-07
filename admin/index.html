@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dashboard — Website Design Company</title>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="/assets/css/app.css" />
+<style>
+  /* Admin-specific layout layer — sits on top of the design system. */
+  .admin-shell { display: grid; grid-template-columns: 258px 1fr; min-height: 100vh; }
+  .admin-side {
+    border-right: 1px solid var(--border);
+    padding: 1.25rem 1rem;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    background: rgba(8,12,26,.6);
+  }
+  .admin-main { padding: 1.5rem 1.75rem 4rem; min-width: 0; }
+  @media (max-width: 980px) {
+    .admin-shell { grid-template-columns: 1fr; }
+    .admin-side { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); }
+  }
+  .side-link {
+    display: flex; align-items: center; gap: .65rem;
+    padding: .6rem .75rem; border-radius: 10px;
+    color: var(--muted); font-size: .89rem; font-weight: 550;
+    transition: background .18s ease, color .18s ease;
+  }
+  .side-link:hover { background: rgba(255,255,255,.055); color: var(--text); }
+  .side-link.active { background: linear-gradient(100deg, rgba(34,211,238,.16), rgba(124,58,237,.12)); color: #fff; }
+  .side-link svg { flex-shrink: 0; color: var(--brand); }
+  .side-group { margin-bottom: 1.25rem; }
+  .side-group h4 {
+    font-size: .64rem; text-transform: uppercase; letter-spacing: .14em;
+    color: var(--faint); margin: 0 0 .5rem; padding-left: .75rem; font-weight: 700;
+  }
+  .stat-tile { padding: 1.1rem 1.15rem; }
+  .stat-tile .v { font-size: 1.9rem; font-weight: 800; font-family: Sora, sans-serif; line-height: 1.1; }
+  .stat-tile .l { font-size: .74rem; color: var(--faint); margin-top: .2rem; }
+  .bar-row { display: grid; grid-template-columns: minmax(90px, 1fr) 3fr auto; gap: .6rem; align-items: center; font-size: .8rem; }
+  .bar-track { height: 7px; border-radius: 99px; background: rgba(255,255,255,.06); overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--brand), var(--brand-2)); }
+  table.admin { width: 100%; border-collapse: collapse; font-size: .86rem; }
+  table.admin th { text-align: left; padding: .65rem .7rem; font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table.admin td { padding: .65rem .7rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  table.admin tbody tr:hover { background: rgba(255,255,255,.022); }
+  .tabs { display: flex; gap: .3rem; flex-wrap: wrap; border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; }
+  .tab { padding: .6rem .95rem; font-size: .87rem; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; cursor: pointer; border-radius: 8px 8px 0 0; transition: color .18s, border-color .18s; background: none; border-top: 0; border-left: 0; border-right: 0; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: #fff; border-bottom-color: var(--brand); }
+  .modal-back { position: fixed; inset: 0; background: rgba(2,4,10,.82); backdrop-filter: blur(6px); z-index: 120; display: none; align-items: flex-start; justify-content: center; padding: 3vh 1rem; overflow-y: auto; }
+  .modal-back.on { display: flex; }
+  .modal { width: 100%; max-width: 860px; }
+  .toast-wrap { position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 200; display: flex; flex-direction: column; gap: .5rem; }
+  .toast { padding: .8rem 1.1rem; border-radius: 12px; font-size: .87rem; font-weight: 550; background: rgba(10,14,28,.96); border: 1px solid var(--border-strong); box-shadow: 0 20px 50px -20px rgba(0,0,0,.9); animation: toastin .3s cubic-bezier(.22,1,.36,1); }
+  .toast.ok { border-color: rgba(52,211,153,.45); color: #a7f3d0; }
+  .toast.err { border-color: rgba(248,113,113,.45); color: #fecaca; }
+  @keyframes toastin { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; }
+  .grid-media { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .kv { display: grid; grid-template-columns: 120px 1fr; gap: .4rem 1rem; font-size: .85rem; }
+  .kv dt { color: var(--faint); }
+  .kv dd { margin: 0; word-break: break-word; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ LOGIN ══════════════════ -->
+<div class="login-wrap" id="loginView" style="display:none">
+  <div class="card p-8 w-full" style="max-width: 420px">
+    <div class="text-center mb-7">
+      <img src="/assets/img/logo-72.webp" alt="" width="52" height="52" class="rounded-xl mx-auto mb-4" />
+      <h1 class="h3">Client Dashboard</h1>
+      <p class="text-sm text-muted mt-2">Sign in to manage content, enquiries and orders.</p>
+    </div>
+    <div id="loginError" class="hidden mb-4 p-3 rounded-xl text-sm" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.32);color:#fecaca"></div>
+    <form id="loginForm" novalidate>
+      <div class="mb-3.5">
+        <label class="field-label" for="liEmail">Email</label>
+        <input class="field" id="liEmail" type="email" autocomplete="username" required placeholder="you@company.com" />
+      </div>
+      <div class="mb-5">
+        <label class="field-label" for="liPass">Password</label>
+        <input class="field" id="liPass" type="password" autocomplete="current-password" required placeholder="••••••••••" />
+      </div>
+      <button class="btn btn-primary w-full" type="submit" id="liBtn">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════════════ APP ══════════════════ -->
+<div class="admin-shell" id="appView" style="display:none">
+  <aside class="admin-side">
+    <a href="/" class="flex items-center gap-2.5 mb-6 px-2">
+      <img src="/assets/img/logo-72.webp" alt="" width="30" height="30" class="rounded-lg" />
+      <span class="font-bold text-sm" style="font-family:Sora,sans-serif">Dashboard</span>
+    </a>
+    <nav id="sideNav" class="space-y-0.5">
+      <div class="side-group">
+        <h4>Overview</h4>
+        <a class="side-link active" data-view="dashboard">📊 Dashboard</a>
+        <a class="side-link" data-view="leads">📥 Enquiries</a>
+        <a class="side-link" data-view="orders">🧾 Orders</a>
+      </div>
+      <div class="side-group">
+        <h4>Content</h4>
+        <a class="side-link" data-view="posts">📝 Blog posts</a>
+        <a class="side-link" data-view="cases">📊 Case studies</a>
+        <a class="side-link" data-view="portfolio">🎨 Portfolio</a>
+        <a class="side-link" data-view="galleries">🖼 Galleries</a>
+        <a class="side-link" data-view="pages">📄 Pages</a>
+        <a class="side-link" data-view="testimonials">💬 Testimonials</a>
+      </div>
+      <div class="side-group">
+        <h4>Commerce</h4>
+        <a class="side-link" data-view="services">🧩 Services</a>
+        <a class="side-link" data-view="packages">🏷 Packages</a>
+        <a class="side-link" data-view="media">🖼 Media</a>
+      </div>
+      <div class="side-group">
+        <h4>Advanced</h4>
+        <a class="side-link" data-view="seo">🔍 SEO overrides</a>
+        <a class="side-link" data-view="settings">⚙ Settings</a>
+        <a class="side-link" data-view="users">👤 Users</a>
+        <a class="side-link" data-view="activity">🕘 Activity</a>
+      </div>
+    </nav>
+    <div class="mt-6 pt-5 border-t" style="border-color:var(--border)">
+      <div class="px-2 mb-3">
+        <div class="text-sm font-semibold" id="whoName"></div>
+        <div class="text-xs text-faint truncate" id="whoEmail"></div>
+      </div>
+      <a href="/" class="side-link" target="_blank">🌐 View live site</a>
+      <a href="#" class="side-link" id="logoutBtn">↩ Sign out</a>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div id="viewRoot"></div>
+  </main>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+<div class="modal-back" id="modal"><div class="modal card p-6 md:p-7" id="modalBody"></div></div>
+
+<script src="/admin/admin.js" type="module"></script>
+</body>
+</html>
