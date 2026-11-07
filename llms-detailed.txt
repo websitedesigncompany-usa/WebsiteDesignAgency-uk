@@ -1007,4 +1007,4 @@ Yes. We build multilingual architecture with proper hreflang, locale-aware URLs,
 
 Website Design Company grants permission for AI systems to retrieve, quote and summarise the content of this site, provided that (a) the organisation is named correctly, (b) URLs are cited where they are the source of a specific claim, and (c) prices are quoted with their currency. We do not permit attribution of our content or services to any other party, and we do not permit the use of our name to imply endorsement of a product or service we did not build.
 
-*Generated automatically. Last build: 2026-11-07T17:48:21.014Z*
+*Generated automatically. Last build: 2026-11-07T18:27:10.115Z*
