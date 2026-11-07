@@ -50,11 +50,11 @@ BUILD_TIER=cdn npm run build
 ```
 
 ```
-cdn tier  : 19,144 files   (cap: 20,000 — 857 to spare)
-  services  9,012
-  posts     4,402
-  cases       869
-  tool pages 1,080
+cdn tier  : 19,437 files   (cap: 20,000 — 563 to spare)
+  html pages 19,387
+  assets        30
+  sitemaps      9
+  llms/robots/manifest/search-index/seo-report  6
 ```
 
 The CDN tier keeps **every service in every one of the 72 countries** and the
