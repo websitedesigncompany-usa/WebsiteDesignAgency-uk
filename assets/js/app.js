@@ -246,7 +246,7 @@
         })
         .catch(function () {
           useApi = false;
-          return fetch('/search-index.json').then(function (r) { return r.json(); });
+          return fetch('/WebsiteDesignAgency-uk/search-index.json').then(function (r) { return r.json(); });
         })
         .then(function (data) {
           if (!useApi) data = { results: localSearch(data, term) };
