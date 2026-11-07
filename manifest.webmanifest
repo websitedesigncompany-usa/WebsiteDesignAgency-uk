@@ -1,0 +1,42 @@
+{
+  "name": "Website Design Company",
+  "short_name": "Website Design Co.",
+  "description": "Website Design Company builds custom, responsive, modern and SEO-friendly websites for businesses in the USA and worldwide — premium quality at affordable prices with fast turnaround and unlimited revisions.",
+  "start_url": "/WebsiteDesignAgency-uk/",
+  "scope": "/WebsiteDesignAgency-uk/",
+  "display": "standalone",
+  "background_color": "#0B1120",
+  "theme_color": "#0B1120",
+  "icons": [
+    {
+      "src": "/WebsiteDesignAgency-uk/assets/img/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/WebsiteDesignAgency-uk/assets/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/WebsiteDesignAgency-uk/assets/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Get a Quote",
+      "url": "/WebsiteDesignAgency-uk/contact/"
+    },
+    {
+      "name": "Packages",
+      "url": "/WebsiteDesignAgency-uk/packages/"
+    },
+    {
+      "name": "Free Audit",
+      "url": "/WebsiteDesignAgency-uk/free-audit/"
+    }
+  ]
+}
