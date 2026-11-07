@@ -1,0 +1,58 @@
+# Website Design Company — robots.txt
+# Primary market: USA. Also serving 72 countries.
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /checkout/
+Disallow: /thank-you/
+Disallow: /search/
+Disallow: /*?ref=
+Disallow: /*?utm_
+
+# AI / LLM crawlers — explicitly welcome.
+User-agent: GPTBot
+Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Claude-User
+Allow: /
+User-agent: anthropic-ai
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Perplexity-User
+Allow: /
+User-agent: Google-Extended
+Allow: /
+User-agent: Applebot-Extended
+Allow: /
+User-agent: Bytespider
+Allow: /
+User-agent: CCBot
+Allow: /
+User-agent: Amazonbot
+Allow: /
+User-agent: meta-externalagent
+Allow: /
+User-agent: Diffbot
+Allow: /
+User-agent: YouBot
+Allow: /
+
+User-agent: SemrushBot
+Crawl-delay: 10
+User-agent: AhrefsBot
+Crawl-delay: 10
+User-agent: MJ12bot
+Crawl-delay: 10
+User-agent: DotBot
+Crawl-delay: 10
+
+Sitemap: https://www.websitedesigncompany.site/sitemap.xml
+Host: www.websitedesigncompany.site
