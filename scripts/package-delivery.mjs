@@ -13,6 +13,7 @@
  */
 import { mkdirSync, copyFileSync, existsSync, readdirSync, statSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
@@ -65,6 +66,13 @@ console.log(`  delivery/ is ${(dirSize(DELIVERY) / 1024).toFixed(0)} KB`);
 
 console.log('▸ Packaging source archive…');
 if (existsSync(TARBALL)) rmSync(TARBALL);
+// The archive is written outside the tree it is archiving. Writing it in
+// place makes tar read a file that is still being written — it fails with
+// "file changed as we read it".
+const STAGE = join(tmpdir(), 'wdc-src-archive');
+rmSync(STAGE, { recursive: true, force: true });
+mkdirSync(STAGE, { recursive: true });
+const stagedTarball = join(STAGE, 'website-design-company-src.tar.gz');
 // node_modules, dist, data and the git metadata are excluded — the archive is
 // the source, and the client rebuilds from it.
 execFileSync(
@@ -79,14 +87,17 @@ execFileSync(
     '--exclude=.skills',
     '--exclude=website-design-company-src.tar.gz',
     '--exclude=delivery',
+    '--exclude=reports',
     '-czf',
-    TARBALL,
+    stagedTarball,
     '-C',
     ROOT,
     '.',
   ],
   { stdio: 'inherit' },
 );
+copyFileSync(stagedTarball, TARBALL);
+rmSync(STAGE, { recursive: true, force: true });
 
 const size = statSync(TARBALL).size;
 console.log(`✓ website-design-company-src.tar.gz — ${(size / 1024 / 1024).toFixed(2)} MB`);
