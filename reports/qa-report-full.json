@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-29T22:30:39.634Z",
-  "durationMs": 886101,
+  "generatedAt": "2026-11-07T19:31:29.483Z",
+  "durationMs": 416044,
   "pages": 45556,
   "sitemapUrls": 45162,
   "coverage": {
@@ -74,7 +74,7 @@
     {
       "severity": "info",
       "rule": "microdata.none",
-      "path": "/algeria/blog/page/9/",
+      "path": "/algeria/blog/page/6/",
       "detail": "No itemprop microdata on the page"
     },
     {
@@ -86,13 +86,13 @@
     {
       "severity": "info",
       "rule": "microdata.none",
-      "path": "/algeria/blog/page/6/",
+      "path": "/algeria/blog/page/7/",
       "detail": "No itemprop microdata on the page"
     },
     {
       "severity": "info",
       "rule": "microdata.none",
-      "path": "/algeria/blog/page/7/",
+      "path": "/algeria/blog/page/9/",
       "detail": "No itemprop microdata on the page"
     }
   ]
