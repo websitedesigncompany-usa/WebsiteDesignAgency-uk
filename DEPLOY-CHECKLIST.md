@@ -1,5 +1,29 @@
 # Launch checklist — Website Design Company
 
+> **Repository note.** The source lives in the GitHub repository
+> `websitedesigncompany-usa/WebsiteDesignAgency-uk` (branch `main`). The CI
+> workflow is committed at `ci/build.yml`; move it to
+> `.github/workflows/build.yml` to activate it on GitHub Actions. The client's
+> original logo is committed as `attachments/logo-original.base64.txt` and the
+> build's copy as `src/assets/brand-logo.base64.txt`, because the Git
+> transport used here cannot carry binary files — the build restores the PNG
+> automatically from the base64 copy.
+>
+> **Latest commits are local only.** The GitHub connection was not available
+> during the last session, so the audit fixes, the angle library and the
+> market-block work are in the local history only. The whole platform is also
+> packaged as `website-design-company-src.tar.gz` (0.71 MB). To catch GitHub
+> up:
+>
+> ```bash
+> git remote add origin https://github.com/websitedesigncompany-usa/WebsiteDesignAgency-uk.git
+> git push -u origin main
+> ```
+>
+> The GitHub connector could not create or fork a repository — that needs a
+> PAT with `repo` scope. With one, a properly named repository is one call.
+
+
 Print this. Tick every line before you point your domain at it.
 
 ## A. One-time setup (I need these from you)
@@ -9,7 +33,7 @@ Print this. Tick every line before you point your domain at it.
 | 1 | **Cloudflare API token** | Deploy the CDN + attach `websitedesigncompany.site` | dash.cloudflare.com → My Profile → API Tokens → Create → *Edit Cloudflare Workers* + *Zone:Include* |
 | 2 | **Vercel token** | Second CDN target / preview | vercel.com → Settings → Account → Tokens |
 | 3 | **Netlify auth token** | Third CDN target | app.netlify.com/user/tokens → New Personal Access Token |
-| 4 | **GitHub PAT** (`repo` scope) | I create + push the repo | github.com/settings/tokens → Generate → classic → `repo` |
+| 4 | **GitHub PAT** (`repo` scope) | Lets me create a properly named repo and push the newest commits | github.com/settings/tokens → Generate → classic → `repo` |
 | 5 | **Stateful host account** | Runs the API + SQLite | Render / Railway / Fly — free tier is fine to start |
 
 ## B. Set these environment variables on the API host
