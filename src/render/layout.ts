@@ -8,7 +8,7 @@
  *   - Everything below the fold is lazily revealed; content is visible without JS.
  */
 
-import { SITE, ORIGIN, BASE_PATH } from '../config/site.js';
+import { SITE, ORIGIN, BASE_PATH, TEXT_ASSETS } from '../config/site.js';
 import { esc, jsonLdBlock } from '../lib/html.js';
 import { renderMeta, Meta } from '../lib/seo.js';
 import { icon } from './icons.js';
@@ -51,7 +51,7 @@ export function documentShell(args: LayoutArgs): string {
     <meta name="format-detection" content="telephone=no" />
     <meta name="color-scheme" content="dark" />
     <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" href="${TEXT_ASSETS ? '/assets/img/brand-logo.svg' : '/assets/img/apple-touch-icon.png'}" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
     <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt" />
@@ -153,7 +153,7 @@ function header(prefix: string, path: string): string {
     <div class="container flex items-center justify-between gap-3 w-full">
       <a href="/" class="brandmark" aria-label="${esc(SITE.name)} — home">
         <span class="brandmark-ring" aria-hidden="true"></span>
-        <img src="/assets/img/logo-72.webp" alt="${esc(SITE.name)} logo" width="36" height="36" class="brandmark-img" fetchpriority="high" decoding="async" />
+        <img src="${LOGO_SRC}" alt="${esc(SITE.name)} logo" width="36" height="36" class="brandmark-img" fetchpriority="high" decoding="async" />
         <span class="brandmark-text">
           <span class="brandmark-name">Website Design</span>
           <span class="brandmark-sub">Company</span>
@@ -307,7 +307,7 @@ function footer(prefix: string): string {
       <div class="grid gap-10 lg:grid-cols-12 pb-12">
         <div class="lg:col-span-4">
           <a href="/" class="flex items-center gap-2.5 mb-4" aria-label="${esc(SITE.name)} — home">
-            <img src="/assets/img/logo-72.webp" alt="${esc(SITE.name)} logo" width="40" height="40" class="rounded-lg" loading="lazy" decoding="async" />
+            <img src="${LOGO_SRC}" alt="${esc(SITE.name)} logo" width="40" height="40" class="rounded-lg" loading="lazy" decoding="async" />
             <span class="flex flex-col leading-none">
               <span class="font-extrabold text-lg tracking-tight" style="font-family:Sora,sans-serif">Website Design</span>
               <span class="text-[0.68rem] tracking-[0.22em] uppercase" style="color:var(--brand)">Company</span>
@@ -447,6 +447,9 @@ function footer(prefix: string): string {
 // ─────────────────────────────────────────────────────────────────────────────
 // Client runtime — ~2KB, deferred, progressive enhancement only
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** The logo the header and footer load — the SVG wrapper when only text assets are published. */
+const LOGO_SRC = TEXT_ASSETS ? '/assets/img/brand-logo.svg' : '/assets/img/logo-72.webp';
 
 export const CLIENT_JS = String.raw`
 (function () {

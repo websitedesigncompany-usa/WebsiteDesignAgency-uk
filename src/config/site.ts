@@ -115,6 +115,15 @@ export const ORIGIN = SITE.origin.replace(/\/$/, '');
  */
 export const BASE_PATH = (process.env.SITE_BASE_PATH || '').trim().replace(/\/+$/, '');
 
+/**
+ * Publish only text-servable assets.
+ *
+ * A GitHub Pages branch pushed through a text-only transport cannot carry the
+ * WebP and PNG logo variants, so the build also writes the logo as an SVG
+ * wrapper with the artwork embedded, and the pages point at that instead.
+ */
+export const TEXT_ASSETS = process.env.SITE_TEXT_ASSETS === '1';
+
 /** Absolute URL helper. */
 export function abs(path: string): string {
   if (!path) return `${ORIGIN}/`;

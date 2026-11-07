@@ -143,6 +143,20 @@ export async function generateImages(outDir: string): Promise<void> {
   await writeWebp(await brandSquare(256), path.join(outDir, 'logo-256.webp'), 93);
   await writeWebp(await brandSquare(512), path.join(outDir, 'logo-512.webp'), 92);
   await writeWebp(await brandSquare(192), path.join(outDir, 'icon-192.webp'), 92);
+
+  // The same artwork as an SVG wrapper with the PNG embedded. A text-only
+  // transport (the GitHub Pages branch) cannot carry the binary variants, and
+  // this keeps the header and footer logo rendering there.
+  const square72 = await sharp(
+    brandSource
+      ? brandSource
+      : Buffer.from(logoSvg(144)),
+  ).resize(72, 72, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png({ compressionLevel: 9 }).toBuffer();
+  await writeFile(
+    path.join(outDir, 'brand-logo.svg'),
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" width="72" height="72" role="img" aria-label="${SITE.name} logo"><image width="72" height="72" href="data:image/png;base64,${square72.toString('base64')}"/></svg>`,
+    'utf8',
+  );
   await writeWebp(await brandSquare(512), path.join(outDir, 'icon-512.webp'), 90);
 
   // A transparent PNG of the supplied logo for the apple touch icon.
