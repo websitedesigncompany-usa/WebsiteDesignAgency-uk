@@ -471,7 +471,7 @@ ${hero({
   secondaryHref: resolveStatic(prefix, 'packages'),
 })}
 ${groups.map((g) => section({
-  children: `${sectionHead({ eyebrow: g.category, h2: `${g.category} Services`, align: 'left' })}
+  children: `${sectionHead({ eyebrow: g.category, h2: `Our ${g.category} Services`, align: 'left' })}
   ${grid(4, g.services.map((s, i) => {
     const href = s.slug === '' ? url(prefix) : resolveServiceLink(prefix, s.slug);
     return `<a href="${esc(href)}" class="block h-full reveal" style="transition-delay:${(i % 4) * 50}ms;--hue:${s.hue}">

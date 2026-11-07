@@ -1,6 +1,7 @@
 import { Country } from '../../data/regions.js';
 import { esc } from '../../lib/html.js';
-import { marketGuidance } from '../../content/market.js';
+import { marketGuidance, marketClose } from '../../content/market.js';
+import { LOCAL_CONTEXT } from '../../data/local-context.js';
 import { formatPrice } from '../../data/packages.js';
 import { section, sectionHead } from '../components.js';
 
@@ -47,6 +48,41 @@ export function marketBlock(country: Country, opts: MarketBlockOptions): string 
     ? `<p class="text-sm text-[#c3cee6] leading-relaxed mt-4">${esc(opts.close)}</p>`
     : '';
 
+  // The practical facts of working in this market. A buyer in this country
+  // needs to know what the paperwork looks like, what they will be charged
+  // and how they will be asked to pay — and none of it is the same as the
+  // next country over.
+  const local = LOCAL_CONTEXT[country.code];
+  const practical = local
+    ? [
+        ['Tax', `Prices are quoted in ${country.currency} before ${local.taxLabel.toLowerCase()}, which is charged at ${local.taxRate}.`],
+        ['Paperwork', `The number that identifies a business here is its ${local.idLabel}, and it appears on the invoice, the contract and the handover documentation.`],
+        ['Payment', `Clients pay by ${local.payments}. We invoice in ${country.currency} and hold the rate for 30 days, so a currency movement mid-project does not change the price.`],
+        ['Contracts', `Companies here are usually named ${local.naming}, so the contract, the domain registration and the domain ownership transfer all use that same name.`],
+        ['Records', `Documents are dated in ${local.dateFormat} format, because that is the order your finance team and your accountant expect to see them in.`],
+        ['Contact', `A local address reads like ${local.address}, and a local number looks like ${local.phone}. We publish both rather than a generic international one.`],
+      ]
+    : [];
+
+  const practicalRows = practical.length
+    ? `<div class="mt-6">
+        <h3 class="h4 mb-3">What working with us in ${esc(country.longName)} actually involves</h3>
+        <dl class="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+          ${practical
+            .map(
+              ([k, v]) => `<div><dt class="text-faint text-xs mb-0.5">${esc(k)}</dt><dd class="m-0 text-[#c3cee6] leading-relaxed">${esc(v)}</dd></div>`,
+            )
+            .join('')}
+        </dl>
+      </div>`
+    : '';
+
+  const quoted = marketClose(
+    country,
+    opts.subject,
+    prices.length ? prices : [{ label: 'Website design', usd: 99 }],
+  );
+
   return section({
     children: `${sectionHead({
       eyebrow: opts.eyebrow || `In ${country.longName}`,
@@ -73,7 +109,9 @@ export function marketBlock(country: Country, opts: MarketBlockOptions): string 
       <p class="text-sm text-[#c3cee6] leading-relaxed">${esc(country.note)}</p>
       ${close}
       ${priceRows}
-    </div>`,
+    </div>
+    ${practicalRows}
+    <p class="text-sm text-[#c3cee6] leading-relaxed mt-5">${esc(quoted)}</p>`,
     tight: true,
   });
 }

@@ -20,8 +20,6 @@ import { postCard, portfolioCard, caseStudyCard } from './service.js';
 import { Service, PAGE_SERVICES, SERVICE_BY_SLUG } from '../../data/services.js';
 import { Country } from '../../data/regions.js';
 import { locationPrefix, resolveStatic, url } from '../../lib/routing.js';
-import { marketGuidance } from '../../content/market.js';
-import { formatPrice } from '../../data/packages.js';
 import { marketBlock } from './market.js';
 
 export interface CompanyPage {
@@ -594,7 +592,6 @@ export function comparisonPage(args: {
   const { pair, prefix, crumbs, hue, country } = args;
   const A = SERVICE_BY_SLUG[pair.a];
   const B = SERVICE_BY_SLUG[pair.b];
-  const guidance = marketGuidance(country);
 
   return `
 ${breadcrumbs(crumbs)}
@@ -638,42 +635,15 @@ ${section({
   </div>`,
 })}
 
-${section({
-  children: `${sectionHead({
-    eyebrow: `Choosing in ${country.longName}`,
-    h2: `What actually decides it in ${country.longName}`,
-    sub: 'The same two options behave differently depending on the law, the buyer and the budget. Here is what applies in this market.',
-    align: 'left',
-  })}
-  <div class="grid md:grid-cols-3 gap-5 mb-8">
-    <div class="card p-5">
-      <div class="eyebrow mb-2">The law</div>
-      <p class="text-sm text-muted leading-relaxed">${esc(guidance.compliance)}</p>
-    </div>
-    <div class="card p-5">
-      <div class="eyebrow mb-2">The expectation</div>
-      <p class="text-sm text-muted leading-relaxed">${esc(guidance.expectation)}</p>
-    </div>
-    <div class="card p-5">
-      <div class="eyebrow mb-2">How it gets bought</div>
-      <p class="text-sm text-muted leading-relaxed">${esc(guidance.buying)}</p>
-    </div>
-  </div>
-  <div class="panel mt-2">
-    <h3 class="h4 mb-2">Where this lands in ${esc(country.longName)}</h3>
-    <p class="text-sm text-[#c3cee6] leading-relaxed">${esc(pair.verdict)}</p>
-    <div class="mt-5 grid sm:grid-cols-2 gap-3">
-      <div class="flex items-center justify-between gap-3 rounded-lg px-4 py-3" style="background:rgba(255,255,255,.04);border:1px solid var(--border)">
-        <span class="text-sm text-muted">${esc(A.name)} from</span>
-        <strong class="text-base" style="color:var(--brand)">${esc(formatPrice(A.fromPrice, country))}</strong>
-      </div>
-      <div class="flex items-center justify-between gap-3 rounded-lg px-4 py-3" style="background:rgba(255,255,255,.04);border:1px solid var(--border)">
-        <span class="text-sm text-muted">${esc(B.name)} from</span>
-        <strong class="text-base" style="color:var(--brand)">${esc(formatPrice(B.fromPrice, country))}</strong>
-      </div>
-    </div>
-    <p class="text-xs text-faint mt-4">Prices shown in ${esc(country.currency)}, converted from our USD book at the published rate. The final quote is fixed in writing before work starts, and it does not change mid-project.</p>
-  </div>`,
+${marketBlock(country, {
+  subject: `${pair.h1.toLowerCase()}`,
+  h2: `What actually decides it in ${country.longName}`,
+  eyebrow: `Choosing in ${country.longName}`,
+  close: `${pair.verdict} The comparison itself does not change between markets — the law, the buyer and the budget do.`,
+  prices: [
+    { label: `${A.name} from`, usd: A.fromPrice },
+    { label: `${B.name} from`, usd: B.fromPrice },
+  ],
 })}
 
 ${section({

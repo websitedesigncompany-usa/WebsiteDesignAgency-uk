@@ -8,12 +8,13 @@
  *   - Everything below the fold is lazily revealed; content is visible without JS.
  */
 
-import { SITE, ORIGIN } from '../config/site.js';
+import { SITE, ORIGIN, BASE_PATH } from '../config/site.js';
 import { esc, jsonLdBlock } from '../lib/html.js';
 import { renderMeta, Meta } from '../lib/seo.js';
 import { icon } from './icons.js';
 import { SERVICES, PAGE_SERVICES } from '../data/services.js';
-import { COUNTRIES, PREFIXED_COUNTRIES, HOME_COUNTRY } from '../data/regions.js';
+import { COUNTRIES, HOME_COUNTRY } from '../data/regions.js';
+import { publishedCountries } from '../lib/routing.js';
 import { INDUSTRIES } from '../data/industries.js';
 import { countryPrefix, locationPrefix, resolveChild, resolveServiceLink, resolveStatic, resolveToolLink, url } from '../lib/routing.js';
 
@@ -220,7 +221,7 @@ function header(prefix: string, path: string): string {
     <div class="mega mega-regions" id="megaRegions" data-mega-panel hidden>
       <div class="mega-inner">
         <div class="mega-regions-grid">
-          ${PREFIXED_COUNTRIES.map(
+          ${publishedCountries().map(
             (c) => `<a href="${esc(url('/', c.slug))}" class="region-tile" title="${esc(c.longName)} — ${c.cities.length} cities, ${esc(c.currency)}">
               <span class="region-tile-name">${esc(c.longName)}</span>
               <span class="region-tile-meta">${c.cities.length} cities</span>
@@ -231,7 +232,7 @@ function header(prefix: string, path: string): string {
           <div class="mega-foot-list">
             <a href="${esc(resolveStatic(prefix, 'locations'))}" class="mega-foot-link">Every location ${icon('arrow', 'w-3.5 h-3.5')}</a>
           </div>
-          <div class="mega-foot-note"><span>${icon('globe', 'w-4 h-4')}</span><span>72 countries · 283 cities · 25 currencies</span></div>
+          <div class="mega-foot-note"><span>${icon('globe', 'w-4 h-4')}</span><span>${publishedCountries().length + 1} countries · ${publishedCountries().reduce((n, c) => n + c.cities.length, 0)} cities · 25 currencies</span></div>
         </div>
       </div>
     </div>
@@ -255,7 +256,7 @@ function header(prefix: string, path: string): string {
       <details class="mb-4">
         <summary class="faq-q !py-3 text-sm font-bold uppercase tracking-wider" style="color:var(--faint)">Locations</summary>
         <div class="grid grid-cols-2 gap-x-3 pt-2">
-          ${PREFIXED_COUNTRIES.map((c) => `<a href="${esc(url('/', c.slug))}" class="drawer-link">${esc(c.longName)}</a>`).join('')}
+          ${publishedCountries().map((c) => `<a href="${esc(url('/', c.slug))}" class="drawer-link">${esc(c.longName)}</a>`).join('')}
         </div>
       </details>
       <details class="mb-4">
@@ -354,7 +355,7 @@ function footer(prefix: string): string {
         <div class="lg:col-span-2">
           <h2 class="text-xs font-bold uppercase tracking-[0.12em] mb-4" style="color:var(--faint)">Popular Locations</h2>
           <ul class="space-y-0.5">
-            ${PREFIXED_COUNTRIES.slice(0, 9)
+            ${publishedCountries().slice(0, 9)
               .map(
                 (c) => `<li><a href="${esc(url('/', c.slug))}" class="footer-link">${esc(c.longName)}</a></li>`,
               )
@@ -695,7 +696,7 @@ export const CLIENT_JS = String.raw`
         })
         .catch(function () {
           useApi = false;
-          return fetch('/search-index.json').then(function (r) { return r.json(); });
+          return fetch('${BASE_PATH}/search-index.json').then(function (r) { return r.json(); });
         })
         .then(function (data) {
           if (!useApi) data = { results: localSearch(data, term) };

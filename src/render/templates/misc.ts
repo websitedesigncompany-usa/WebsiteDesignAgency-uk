@@ -10,6 +10,7 @@ import { Industry } from '../../data/industries.js';
 import { Service, SERVICE_BY_SLUG } from '../../data/services.js';
 import { Country } from '../../data/regions.js';
 import { resolveChild, resolveServiceLink, resolveStatic, resolveToolLink, url } from '../../lib/routing.js';
+import { marketBlock } from './market.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Legal
@@ -356,6 +357,17 @@ ${posts.length ? section({
   ${grid(3, posts.map((p, i) => postCard(p, i)).join(''))}`,
   tight: true,
 }) : ''}
+
+${marketBlock(country, {
+  subject: `${industry.name.toLowerCase()} website design`,
+  h2: `What changes for ${industry.name.toLowerCase()} in ${country.longName}`,
+  eyebrow: `In ${country.longName}`,
+  close: `The process is the same everywhere. What changes is the law you have to satisfy, the evidence your buyer asks for, and the currency the quote is written in — so we write it in ${country.currency} and hold it for 30 days.`,
+  prices: [
+    { label: 'Website design from', usd: 99 },
+    { label: 'Industry playbook from', usd: 299 },
+  ],
+})}
 
 ${section({
   children: `<div class="grid lg:grid-cols-2 gap-10 items-start">

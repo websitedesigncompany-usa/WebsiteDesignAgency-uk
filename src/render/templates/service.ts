@@ -6,6 +6,7 @@
  */
 
 import { esc, richText, formatDate, readingTime, wordCount, truncate } from '../../lib/html.js';
+import { marketBlock } from './market.js';
 import { icon } from '../icons.js';
 import { SITE } from '../../config/site.js';
 import {
@@ -87,6 +88,17 @@ ${section({
   children: `${statsBar()}
   <div class="mt-8">${trustBadges()}</div>`,
   tight: true,
+})}
+
+${marketBlock(country, {
+  subject: service.name.toLowerCase(),
+  h2: `${service.name} in ${country.longName}: what is different`,
+  eyebrow: `In ${country.longName}`,
+  close: `The work does not change. The law you have to satisfy, the evidence your buyer asks for, and the currency the quote is written in all do — so we write it in ${country.currency} and hold it for 30 days.`,
+  prices: [
+    { label: `${service.name} from`, usd: service.fromPrice },
+    { label: 'Landing page from', usd: 99 },
+  ],
 })}
 
 ${section({
