@@ -26,6 +26,19 @@
 
 Print this. Tick every line before you point your domain at it.
 
+## 0. Turn on the two public hosts
+
+Both are ready — each needs one setting from you.
+
+| Host | URL | State |
+|---|---|---|
+| **Platform subdomain** | `https://edw7538i4d8ub.space.mcode.io` | published |
+| **GitHub Pages** | `https://websitedesigncompany-usa.github.io/WebsiteDesignAgency-uk/` | published from the `gh-pages` branch |
+
+Both are live now — nothing to switch on. `PAGES-SETUP.md` describes the
+optional GitHub Actions route, which rebuilds the site on every push instead
+of serving a snapshot.
+
 ## A. One-time setup (I need these from you)
 
 | # | What | Why | Where to get it |

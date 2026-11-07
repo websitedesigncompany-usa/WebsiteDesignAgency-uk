@@ -187,7 +187,20 @@ BUILD_TIER=preview npm run build      # 1,019 files, 186 MB
 | `BUILD_POSTS_PER_LOCATION` | 3 | Blog posts for the root (USA) scope |
 | `BUILD_CASES_PER_LOCATION` | 1 | Case studies for the root scope |
 | `BUILD_CITY_PAGES` | on | Generate service × city pages |
+### Where it is live now
+
+| Host | URL | Contents |
+|---|---|---|
+| Platform subdomain | `https://edw7538i4d8ub.space.mcode.io` | 1,019 pages — USA, UK, UAE, Germany and six cities |
+| GitHub Pages | `https://websitedesigncompany-usa.github.io/WebsiteDesignAgency-uk/` | the same build, published from the `gh-pages` branch |
+| Production (planned) | `https://www.websitedesigncompany.site` | the full 45,555-page build |
+
+GitHub Pages caps a site at 1 GB and 10,000 files, so the copy there is a
+market subset by design. See `PAGES-SETUP.md` for the one setting that turns
+it on, and `HOSTING.md` for the production targets.
+
 | `SITE_ORIGIN` | `https://www.websitedesigncompany.site` | Canonical origin for absolute URLs, schema and sitemaps |
+| `SITE_BASE_PATH` | *(empty)* | Serve the site from a sub-path — GitHub Pages project sites need `/<repo>/` |
 | `PORT` | 3000 | Server port |
 | `DB_PATH` | `data/app.db` | SQLite file location |
 | `QA_SAMPLE` | 0 (all) | Audit only a stratified sample of N pages |

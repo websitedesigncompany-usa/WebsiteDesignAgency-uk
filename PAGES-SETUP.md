@@ -21,19 +21,19 @@ Two things are worth knowing before you flip anything:
 
 ---
 
-## Option A — one setting, live in a minute
+## Option A — published, live now
 
-The `gh-pages` branch is already populated with a complete, working build.
+The `gh-pages` branch carries a complete, working build and GitHub is already
+serving it:
 
-1. Open the repository → **Settings** → **Pages**
-2. Under **Build and deployment**, set **Source** to **Deploy from a branch**
-3. **Branch**: `gh-pages` · **Folder**: `/ (root)`
-4. **Save**
+**`https://websitedesigncompany-usa.github.io/WebsiteDesignAgency-uk/`**
 
-GitHub publishes it within a minute or two at
-`https://websitedesigncompany-usa.github.io/WebsiteDesignAgency-uk/`.
+If it ever needs republishing, the source is **Settings → Pages → Build and
+deployment → Source: Deploy from a branch**, branch `gh-pages`, folder
+`/ (root)`.
 
-This is a snapshot. It does not rebuild itself when the source changes.
+This is a snapshot. It does not rebuild itself when the source changes — that
+is what Option B is for.
 
 ---
 
@@ -150,7 +150,7 @@ jobs:
 | Host | URL | Contents |
 |---|---|---|
 | Platform subdomain | `https://edw7538i4d8ub.space.mcode.io` | 1,019 pages — USA, UK, UAE, Germany and six cities |
-| GitHub Pages | `https://websitedesigncompany-usa.github.io/WebsiteDesignAgency-uk/` | the same build, mirrored at the repository sub-path |
+| GitHub Pages | `https://websitedesigncompany-usa.github.io/WebsiteDesignAgency-uk/` | the same build, published from the `gh-pages` branch |
 | Production (planned) | `https://www.websitedesigncompany.site` | the full 45,555-page build |
 
 The full build is 45,555 pages and 11 GB — far past GitHub Pages' 1 GB site
