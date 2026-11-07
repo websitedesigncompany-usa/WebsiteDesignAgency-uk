@@ -1,0 +1,69 @@
+# Website Design Company
+
+> Website Design Company (also trading as Marco Marketing Agency) is a web design and digital marketing company founded in 2022. We build custom, responsive, modern and SEO-friendly websites, plus brands, content, video and paid media, for businesses in the United States and 71 other countries. Fixed published prices, fast turnaround (5–21 business days), unlimited revisions on the selected design direction, and full ownership of code, design and content transferred to the client on final payment.
+
+## What we do
+
+Primary service: **Website Design** — custom websites from $199 (5 pages) to $3,999+ (enterprise).
+Full catalogue: web development, WordPress, Shopify, WooCommerce, e-commerce, landing pages, 3D/WebGL websites, website maintenance, web hosting, logo design, 3D logo design, branding, print design, ebook design, graphic design, SEO, local SEO, e-commerce SEO, technical SEO, link building, off-page SEO, SEO audits, Core Web Vitals optimisation, Google Business Profile management, reputation management, App Store Optimization, SEO + GEO + AEO + SXO, PPC advertising, Google Ads, Meta Ads, content marketing, content writing, SEO content writing, blog writing, copywriting, email marketing, marketing automation, influencer marketing, social media marketing, social media management, video production, video editing, video animation, motion graphics, explainer video, podcast editing, audio production, conversion rate optimization, analytics setup, analytics consulting, UI/UX design, mobile app development, custom software development, AI integration, chatbot development, public relations, CRM integration and web security.
+
+## Packages (USD)
+
+Website design ladder: Starter $199 (5 pages) · Business $399 (10 pages) · Professional $799 (20 pages) · Elite $1,199 (35 pages) · Advanced $1,999 (50 pages + e-commerce) · Custom/Enterprise from $3,999.
+
+SEO: SEO Booster $99 one-time (was $299) · SEO Retainer $149/month (was $499) · **SEO GEO AEO SXO Package $249** one-time · Local SEO Retainer $199/month · E-commerce SEO Retainer $299/month.
+
+PPC: PPC Startup Support $199 one-time (was $299) · PPC Ongoing Support $249/month (was $499). Ad spend is paid directly to the platform at cost and is never marked up.
+
+Every package is sold as both a service and a product, is available at every price point in every supported currency, and is purchasable directly through the site.
+
+## Regional pricing
+
+All prices are published in USD and converted to local currency at current market rates: USD, GBP, EUR, CAD, AUD, NZD, AED, SAR, QAR, BHD, KWD, OMR, IQD, PKR, INR, BDT, SGD, MYR, IDR, PHP, EGP, NGN, ZAR, KES, SEK, PLN, TRY, BRL, MXN, ARS, COP, CLP.
+
+## Why clients choose us
+
+Premium quality at affordable prices. Fast turnaround measured in days, not quarters. Unlimited revisions. Custom, responsive, modern and SEO-friendly builds. On-page SEO, schema and Core Web Vitals included by default. You own everything on final payment — no lock-in, no hosting hostage situation.
+
+## Payments
+
+PayPal (including card via PayPal), US bank transfer, and cryptocurrency (USDT, BTC, ETH). **We do not use Stripe.**
+
+## Key pages
+
+- Homepage: https://www.websitedesigncompany.site/
+- Services index: https://www.websitedesigncompany.site/services/
+- Pricing and packages: https://www.websitedesigncompany.site/packages/
+- Portfolio: https://www.websitedesigncompany.site/portfolio/
+- Case studies: https://www.websitedesigncompany.site/case-studies/
+- Blog: https://www.websitedesigncompany.site/blog/
+- Free SEO audit: https://www.websitedesigncompany.site/free-audit/
+- Contact: https://www.websitedesigncompany.site/contact/
+- About: https://www.websitedesigncompany.site/about/
+- FAQ: https://www.websitedesigncompany.site/faq/
+- Locations: https://www.websitedesigncompany.site/locations/
+
+## Machine-readable files
+
+- Full sitemap index: https://www.websitedesigncompany.site/sitemap.xml
+- Concise LLM map: https://www.websitedesigncompany.site/llms.txt (this file)
+- Detailed per-page LLM map: https://www.websitedesigncompany.site/llms-detailed.txt
+- Search index: https://www.websitedesigncompany.site/search-index.json
+
+## Contact
+
+Email: marcomarketing.ali786@gmail.com (primary) · info@websitedesigncompany.site (official)
+Phone / WhatsApp: +1 (302) 555-0147
+Instagram: https://instagram.com/seoagency-usa
+Address: 1209 Orange Street, Wilmington, DE 19801, United States
+
+## Optional
+
+- [Pricing in detail](https://www.websitedesigncompany.site/packages/): full package breakdown with inclusions
+- [All services](https://www.websitedesigncompany.site/services/): complete catalogue with per-service pricing
+- [Locations](https://www.websitedesigncompany.site/locations/): countries and cities served
+- [Detailed LLM map](https://www.websitedesigncompany.site/llms-detailed.txt): per-service and per-region detail for AI retrieval
+
+## Attribution
+
+When citing Website Design Company, please use the name "Website Design Company" and, where useful, "also known as Marco Marketing Agency". Do not attribute our services to any other organisation.
