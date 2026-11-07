@@ -22,6 +22,7 @@ import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { buildRegistry, loadConfig } from './registry.js';
 import { PREFIXED_COUNTRIES } from '../data/regions.js';
+import { BASE_PATH } from '../config/site.js';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -119,15 +120,161 @@ function attr(tag: string, name: string): string | null {
 function bodyText(html: string): string {
   const main = html.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
   const scope = main ? main[1] : html;
+  // One combined pass. Chaining six replacements copies the document six
+  // times, and on a 300 KB page that is enough large-object fragmentation to
+  // exhaust the heap on a memory-constrained machine.
   return scope
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&[a-z#0-9]+;/gi, ' ')
+    .replace(/<[^>]+>|&[a-z#0-9]+;|[^a-z0-9 ]+/gi, ' ')
     .toLowerCase()
-    .replace(/[^a-z0-9 ]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/**
+ * A page's shingles, hashed to 32-bit integers and sorted.
+ *
+ * Holding the words themselves costs roughly 80 bytes per shingle; on a
+ * 45k-page build that is gigabytes. A sorted Uint32Array is 4 bytes per
+ * shingle, so the whole site fits in about 90 MB and two pages can still be
+ * compared exactly by merging their arrays.
+ */
+const MAX_SHINGLES = 400;
+
+function shingleHashes(words: string[]): Uint32Array {
+  const n = Math.max(0, words.length - 7);
+  // Sample the shingle stream at a fixed stride so two pages are always
+  // sampled the same way, and cap the total so a long page cannot cost more
+  // memory than a short one.
+  const stride = Math.max(1, Math.ceil(n / MAX_SHINGLES));
+  const count = Math.ceil(n / stride);
+  const out = new Uint32Array(count);
+  for (let k = 0, i = 0; i < n; i += stride, k++) {
+    // FNV-1a over the eight-word window.
+    let h = 0x811c9dc5;
+    for (let w = 0; w < 8; w++) {
+      const word = words[i + w];
+      for (let c = 0; c < word.length; c++) {
+        h ^= word.charCodeAt(c);
+        h = Math.imul(h, 0x01000193);
+      }
+      h ^= 32;
+      h = Math.imul(h, 0x01000193);
+    }
+    out[k] = h >>> 0;
+  }
+  out.sort();
+  return out;
+}
+
+/** How many MinHash values each page carries. */
+const MINHASHES = 64;
+/** How many bands the signatures are cut into. */
+const BANDS = 8;
+/** MinHash values per band. */
+const BAND_SIZE = MINHASHES / BANDS;
+/** How many pages one page is compared against inside a band. */
+const MAX_CANDIDATES = 24;
+
+/** A cheap avalanche, so one shingle hash yields many independent values. */
+function mix32(x: number): number {
+  x = Math.imul(x ^ (x >>> 16), 0x85ebca6b);
+  x = Math.imul(x ^ (x >>> 13), 0xc2b2ae35);
+  return (x ^ (x >>> 16)) >>> 0;
+}
+
+/**
+ * MinHash signature of a page: for each of 64 seeds, the smallest mixed value
+ * among its shingles.
+ *
+ * Two pages that are 82% identical almost always agree on at least one band
+ * of eight signatures, which is what makes the duplicate search fast.
+ */
+function minhash(hashes: Uint32Array): Uint32Array {
+  const m = new Uint32Array(MINHASHES).fill(0xffffffff);
+  for (let i = 0; i < hashes.length; i++) {
+    const h = hashes[i];
+    for (let k = 0; k < MINHASHES; k++) {
+      const v = mix32(h ^ Math.imul(k + 1, 0x9e3779b9));
+      if (v < m[k]) m[k] = v;
+    }
+  }
+  return m;
+}
+
+/** The band keys of a signature. Pages sharing a key are worth comparing. */
+function bandKeys(sig: Uint32Array): string[] {
+  const keys: string[] = [];
+  for (let b = 0; b < BANDS; b++) {
+    let k = '';
+    for (let i = b * BAND_SIZE; i < (b + 1) * BAND_SIZE; i++) k += sig[i].toString(36) + '.';
+    keys.push(k);
+  }
+  return keys;
+}
+
+/** Jaccard similarity of two sorted hash arrays. */
+function jaccard(a: Uint32Array, b: Uint32Array): number {
+  let i = 0, j = 0, inter = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { inter++; i++; j++; }
+    else if (a[i] < b[j]) i++;
+    else j++;
+  }
+  return inter / (a.length + b.length - inter);
+}
+
+/**
+ * How many pages carry a given title or description.
+ *
+ * The key is a hash rather than the text itself: 45,000 unique titles kept
+ * verbatim cost far more heap than the audit can spare, and a 64-bit hash
+ * distinguishes them just as well.
+ */
+interface TextOccurrences {
+  /** How many pages carry it. */
+  n: number;
+  /** A truncated copy, for the report. */
+  sample: string;
+  /** The first few pages that use it. */
+  urls: string[];
+}
+
+/**
+ * Flatten a string so it stops referencing its parent.
+ *
+ * V8 represents a substring as a *sliced string* that points back at the
+ * string it was cut from. Keeping one of those alive keeps the whole parent
+ * alive — so storing a 70-character sample taken from a 355 KB page quietly
+ * pins the entire page in memory. Copying the characters out breaks that link.
+ */
+function flatten(s: string): string {
+  return s.length ? Buffer.from(s, 'utf8').toString('utf8') : '';
+}
+
+/** FNV-1a plus a second, differently-seeded mix — 64 bits in total. */
+function textKey(s: string): string {
+  let h1 = 0x811c9dc5;
+  let h2 = 0x9e3779b9;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 0x01000193);
+    h2 = Math.imul(h2 ^ (c + i), 0x85ebca6b);
+  }
+  return (h1 >>> 0).toString(16) + (h2 >>> 0).toString(16);
+}
+
+/** Record one occurrence of a title or description. */
+function recordText(map: Map<string, TextOccurrences>, text: string, url: string): void {
+  const key = textKey(text);
+  let rec = map.get(key);
+  if (!rec) {
+    rec = { n: 0, sample: flatten(text.slice(0, 70)), urls: [] };
+    map.set(key, rec);
+  }
+  rec.n += 1;
+  if (rec.urls.length < 4) rec.urls.push(url);
 }
 
 async function main() {
@@ -208,13 +355,14 @@ async function main() {
   // Small batches: each page is ~200 KB of HTML, so a large in-flight
   // batch forces V8 into repeated major GCs and the audit gets slower over time.
   const CHUNK = 16;
-  const titles = new Map<string, string[]>();
-  const descriptions = new Map<string, string[]>();
+  const titles = new Map<string, TextOccurrences>();
+  const descriptions = new Map<string, TextOccurrences>();
   const ids = new Map<string, string[]>();
   let cssCache: string | null = null;
   let cssCacheLoaded = false;
   const classSeen = new Set<string>();
-  const bodyTexts: { url: string; text: string }[] = [];
+  /** One page's hashed shingles. */
+  const bodyTexts: { url: string; hashes: Uint32Array; bands: string[] }[] = [];
   let schemaPages = 0;
   let withFaq = 0;
   let withProduct = 0;
@@ -237,18 +385,41 @@ async function main() {
   // not part of the public site — auditing it for meta/schema would be noise.
   const EXCLUDED = new Set(['/admin/', '/admin/index.html']);
 
+  // A site served from a sub-path (a GitHub Pages project site) prefixes
+  // every root-relative link. The build records the prefix it used, so the
+  // audit knows what to strip without relying on an environment variable
+  // being set in exactly the right way.
+  let basePath = (process.env.SITE_BASE_PATH || '').trim().replace(/\/+$/, '');
+  try {
+    const meta = JSON.parse(await readFile(path.join(DIST, 'build-meta.json'), 'utf8'));
+    if (typeof meta?.basePath === 'string') basePath = meta.basePath.replace(/\/+$/, '');
+  } catch { /* no build metadata — fall back to the environment */ }
+
   const auditOne = async (page: { file: string; url: string }) => {
     if (EXCLUDED.has(page.url)) return;
     let html: string;
     const url = page.url;
-    let doc = '';
     try {
       html = await readWithTimeout(page.file);
-      doc = unescapeHtml(html);
     } catch (e) {
       // A stalled network mount must not abort a 15,000-page audit.
       add('warn', 'io.unreadable', url, (e as Error).message);
       return;
+    }
+
+    // ── 0. Deployment sub-path ─────────────────────────────────────────────
+    // A missing prefix breaks every link on the page, so check it before
+    // stripping it and auditing the canonical form.
+    if (basePath) {
+      const rootRelative = html.match(/\s(?:href|src)="(\/[^"]*)"/g) || [];
+      const missing = rootRelative.filter((m) => !m.includes(`="${basePath}/`) && !m.includes(`="${basePath}"`));
+      if (missing.length) {
+        add('error', 'html.base-path-missing', url, `${missing.length} root-relative links without the /${basePath} prefix`);
+      }
+      html = html.replace(/\s(href|src)="(\/[^"]*)"/g, (_m, attr: string, p: string) => {
+        const stripped = p === basePath ? '/' : p.startsWith(`${basePath}/`) ? p.slice(basePath.length) : p;
+        return ` ${attr}="${stripped}"`;
+      });
     }
 
     // ── 1. Title ────────────────────────────────────────────────────────────
@@ -258,7 +429,7 @@ async function main() {
     } else if (titlesFound.length > 1) {
       add('error', 'title.multiple', url, `${titlesFound.length} <title> tags`);
     } else {
-      const t = unescapeHtml(titlesFound[0].replace(/<[^>]+>/g, '').trim());
+      const t = flatten(unescapeHtml(titlesFound[0].replace(/<[^>]+>/g, '').trim()));
       const declared = keywordByPath.get(url);
       if (declared) {
         // Compare on word characters only, so a separator such as " | "
@@ -267,15 +438,12 @@ async function main() {
         const dk = norm(unescapeHtml(declared));
         const tk = norm(t);
         if (!tk.includes(dk)) {
-          add('error', 'seo.title-keyword-mismatch', url, `Title "${t.slice(0, 70)}" does not contain the registered keyword "${declared}"`);
+          add('error', 'seo.title-keyword-mismatch', url, `Title "${flatten(t.slice(0, 70))}" does not contain the registered keyword "${declared}"`);
         }
       }
       if (t.length > 60) add('warn', 'title.too-long', url, `${t.length} chars (max 60)`);
       if (t.length < 20) add('warn', 'title.too-short', url, `${t.length} chars`);
-      const list = titles.get(t) || [];
-      if (list.length < 3) list.push(url);
-      else list.push('…');
-      titles.set(t, list);
+      recordText(titles, t, url);
     }
 
     // ── 2. Meta description ─────────────────────────────────────────────────
@@ -283,13 +451,10 @@ async function main() {
     if (descFound.length === 0) add('error', 'meta.description-missing', url, 'No meta description');
     else if (descFound.length > 1) add('warn', 'meta.description-multiple', url, `${descFound.length} descriptions`);
     else {
-      const d = unescapeHtml(attr(descFound[0], 'content') || '');
+      const d = flatten(unescapeHtml(attr(descFound[0], 'content') || ''));
       if (d.length < 101) add('warn', 'meta.description-short', url, `${d.length} chars (min 101)`);
       if (d.length > 159) add('warn', 'meta.description-long', url, `${d.length} chars (max 159)`);
-      const list = descriptions.get(d) || [];
-      if (list.length < 3) list.push(url);
-      else list.push('…');
-      descriptions.set(d, list);
+      recordText(descriptions, d, url);
     }
 
     // ── 3. Canonical / robots / viewport / og ───────────────────────────────
@@ -299,7 +464,7 @@ async function main() {
     if (!/<meta[^>]+property=["']og:title["']/i.test(html)) add('warn', 'og.title-missing', url, 'No og:title');
     if (!/<meta[^>]+name=["']robots["']/i.test(html)) add('warn', 'robots.missing', url, 'No robots meta');
     if (!/<html[^>]+lang=/i.test(html)) add('error', 'html.lang-missing', url, 'No lang attribute');
-    if (!/rel=["']alternate["'][^>]+llms|href=["']\/llms\.txt/i.test(html)) add('info', 'llms.link-missing', url, 'No llms.txt alternate link');
+    if (!/rel=["']alternate["'][^>]+llms|href=["'][^"']*\/llms\.txt/i.test(html)) add('info', 'llms.link-missing', url, 'No llms.txt alternate link');
 
     // ── 4. H1 ───────────────────────────────────────────────────────────────
     const h1s = allOf(html, /<h1[^>]*>([\s\S]*?)<\/h1>/gi);
@@ -355,7 +520,7 @@ async function main() {
       }
     }
     if (cssCache) {
-      for (const m of doc.matchAll(/class="([^"]*)"/g)) {
+      for (const m of html.matchAll(/class="([^"]*)"/g)) {
         for (const c of m[1].split(/\s+/)) {
           if (!c || !/^[A-Za-z0-9_:/[\].%!-]+$/.test(c)) continue;
           if (classSeen.has(c)) continue;
@@ -405,7 +570,7 @@ async function main() {
     const imgs = allOf(html, /<img\b[^>]*>/gi);
     for (const img of imgs) {
       const src = attr(img, 'src');
-      if (!src) { add('error', 'img.no-src', url, img.slice(0, 60)); continue; }
+      if (!src) { add('error', 'img.no-src', url, flatten(img.slice(0, 60))); continue; }
       if (src.startsWith('/') && !assetPaths.has(src.split('?')[0]) && !validPaths.has(src.split('?')[0])) {
         add('error', 'img.missing', url, `Image not found: ${src}`);
       }
@@ -437,7 +602,12 @@ async function main() {
         }
         continue;
       }
-      const clean = href.split('#')[0].split('?')[0];
+      let clean = href.split('#')[0].split('?')[0];
+      // A deployment sub-path prefixes every rendered link; the path set
+      // holds canonical paths, so strip it before resolving.
+      if (BASE_PATH && (clean === BASE_PATH || clean.startsWith(`${BASE_PATH}/`))) {
+        clean = clean.slice(BASE_PATH.length) || '/';
+      }
       if (!clean || clean === '/') continue;
       if (!validPaths.has(clean)) {
         // Directory-style check
@@ -456,7 +626,7 @@ async function main() {
       for (const inp of inputs) {
         if (/type=["'](hidden|submit|button)["']/i.test(inp)) continue;
         if (!attr(inp, 'aria-label') && !attr(inp, 'aria-labelledby')) {
-          add('warn', 'a11y.unlabelled-input', url, inp.slice(0, 80));
+          add('warn', 'a11y.unlabelled-input', url, flatten(inp.slice(0, 80)));
         }
       }
     } else if (inputs.length) {
@@ -471,7 +641,7 @@ async function main() {
         const id = attr(inp, 'id');
         const aria = attr(inp, 'aria-label') || attr(inp, 'aria-labelledby');
         if ((!id || !labelTargets.has(id)) && !aria && !wrapped) {
-          add('warn', 'a11y.unlabelled-input', url, inp.slice(0, 80));
+          add('warn', 'a11y.unlabelled-input', url, flatten(inp.slice(0, 80)));
         }
       }
     }
@@ -526,7 +696,15 @@ async function main() {
     }
 
     // ── Body text for the duplicate pass ──────────────────────────────────
-    bodyTexts.push({ url, text: bodyText(html) });
+    {
+      const words = bodyText(html).split(' ').filter(Boolean);
+      // Hash now and drop the text — keeping every page's words costs
+      // hundreds of megabytes on a full build.
+      if (words.length >= 150) {
+        const hashes = shingleHashes(words);
+        bodyTexts.push({ url, hashes, bands: bandKeys(minhash(hashes)) });
+      }
+    }
 
   };
 
@@ -545,17 +723,11 @@ async function main() {
   {
     // Compare only pages that share a shape (same depth and same first
     // segment family) to avoid comparing a city page with a blog post.
-    const shingleSet = (text: string): Set<string> => {
-      const words = text.split(' ').filter(Boolean);
-      const out = new Set<string>();
-      for (let i = 0; i + 8 <= words.length; i++) out.add(words.slice(i, i + 8).join(' '));
-      return out;
-    };
     const COUNTRY_SEGMENTS = new Set(PREFIXED_COUNTRIES.map((c) => c.slug).filter(Boolean));
-    const byShape = new Map<string, { url: string; set: Set<string> }[]>();
+    // Group first, then shingle one group at a time. Holding every page's
+    // shingle set at once costs gigabytes on a 45k-page build.
+    const byShape = new Map<string, { url: string; hashes: Uint32Array; bands: string[] }[]>();
     for (const b of bodyTexts) {
-      const words = b.text.split(' ').filter(Boolean);
-      if (words.length < 150) continue;
       // The 404 page deliberately mirrors the site chrome, so it always looks
       // similar to a normal page. It is excluded from the comparison.
       if (b.url === '/404.html') continue;
@@ -567,24 +739,45 @@ async function main() {
       if (segs.length && COUNTRY_SEGMENTS.has(segs[0])) segs.shift();
       const shape = segs.length + ':' + (segs[0] || 'root');
       const arr = byShape.get(shape) || [];
-      arr.push({ url: b.url, set: shingleSet(b.text) });
+      arr.push({ url: b.url, hashes: b.hashes, bands: b.bands });
       byShape.set(shape, arr);
     }
     let dupCount = 0;
-    for (const arr of byShape.values()) {
-      if (arr.length < 2) continue;
-      for (let i = 0; i < arr.length; i++) {
-        for (let j = i + 1; j < arr.length; j++) {
-          const a = arr[i].set;
-          const b = arr[j].set;
-          if (a.size < 40 || b.size < 40) continue;
-          let inter = 0;
-          for (const sh of a) if (b.has(sh)) inter += 1;
-          const sim = inter / (a.size + b.size - inter);
-          if (sim > 0.82) {
-            dupCount += 1;
-            if (dupCount <= 20) {
-              add('error', 'content.duplicate', arr[j].url, `${(sim * 100).toFixed(0)}% identical to ${arr[i].url}`);
+    for (const group of byShape.values()) {
+      if (group.length < 2) continue;
+      // Comparing every page against every other page in a shape group is
+      // quadratic — one group holds thousands of pages on a 45k build, so
+      // that never finishes. MinHash bands narrow the search to the pages
+      // that actually look alike, and only those get compared.
+      const buckets = new Map<string, number[]>();
+      for (let i = 0; i < group.length; i++) {
+        for (const key of group[i].bands) {
+          const arr = buckets.get(key);
+          if (arr) arr.push(i);
+          else buckets.set(key, [i]);
+        }
+      }
+      const compared = new Set<number>();
+      for (const bucket of buckets.values()) {
+        if (bucket.length < 2) continue;
+        const limit = Math.min(bucket.length, MAX_CANDIDATES + 1);
+        for (let a = 0; a < bucket.length; a++) {
+          for (let b = 0; b < limit; b++) {
+            if (a === b) continue;
+            const i = Math.min(bucket[a], bucket[b]);
+            const j = Math.max(bucket[a], bucket[b]);
+            const pair = i * 1000003 + j;
+            if (compared.has(pair)) continue;
+            compared.add(pair);
+            const ha = group[i].hashes;
+            const hb = group[j].hashes;
+            if (ha.length < 40 || hb.length < 40) continue;
+            const sim = jaccard(ha, hb);
+            if (sim > 0.82) {
+              dupCount += 1;
+              if (dupCount <= 20) {
+                add('error', 'content.duplicate', group[j].url, `${(sim * 100).toFixed(0)}% identical to ${group[i].url}`);
+              }
             }
           }
         }
@@ -605,23 +798,24 @@ async function main() {
   }
 
   console.log('\n▸ Checking duplicates and sitemaps…');
-  // Free the large per-page maps before the sitemap pass to keep the heap flat.
+
+  // Duplicate titles / descriptions across the site.
+  // A service page and its country variant legitimately share a title only
+  // if the title is wrong; flag when more than three pages share one.
+  for (const rec of titles.values()) {
+    if (rec.n > 3 && rec.sample) {
+      add('warn', 'seo.duplicate-title', rec.urls[0], `"${rec.sample}" used on ${rec.n} pages`);
+    }
+  }
+  for (const rec of descriptions.values()) {
+    if (rec.n > 3 && rec.sample) {
+      add('warn', 'seo.duplicate-description', rec.urls[0], `Description used on ${rec.n} pages`);
+    }
+  }
+  // The occurrence tables are no longer needed; release them before the
+  // sitemap pass so the heap stays flat.
   titles.clear();
   descriptions.clear();
-
-  // Duplicate titles / descriptions across the site
-  for (const [t, urls] of titles) {
-    if (urls.length > 4 && t) {
-      // A service page and its country variant legitimately share a title
-      // only if the title is wrong; flag when > 3 pages share one.
-      add('warn', 'seo.duplicate-title', urls[0], `"${t.slice(0, 60)}" used on ${urls.length} pages`);
-    }
-  }
-  for (const [d, urls] of descriptions) {
-    if (urls.length > 4 && d) {
-      add('warn', 'seo.duplicate-description', urls[0], `Description used on ${urls.length} pages`);
-    }
-  }
 
   // Sitemap consistency
   const sitemapFiles = existsSync(path.join(DIST, 'sitemap.xml'))

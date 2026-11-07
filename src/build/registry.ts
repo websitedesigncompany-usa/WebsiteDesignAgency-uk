@@ -16,9 +16,10 @@ import { serviceKeyword, toolKeyword, caseKeyword, industryKeyword } from '../li
 import { TOOLS } from '../data/tools.js';
 import { COMPANY_PAGES, COMPARISONS } from '../render/templates/company.js';
 import { GeneratedPost, PostType, REDESIGN_TOPICS, generatePost } from '../content/posts.js';
+import { ANGLES_PER_TYPE } from '../content/angles.js';
 import { generateCaseStudy, CaseStudy, flagshipCaseStudies } from '../content/case-studies.js';
 import { slugify } from '../lib/html.js';
-import { url, countryPrefix, locationPrefix, countryHubUrl, cityHubUrl, serviceUrl, resolveStatic } from '../lib/routing.js';
+import { url, countryPrefix, locationPrefix, countryHubUrl, cityHubUrl, serviceUrl, resolveServiceLink, resolveStatic } from '../lib/routing.js';
 
 export interface RegistryEntry {
   path: string;
@@ -127,7 +128,11 @@ export const DEFAULT_CONFIG: BuildConfig = {
   cityServicePages: true,
   regionalIndexes: true,
   cityServiceFilter: [],
-  cityTools: true,
+  // City-level tool pages are not published. A tool is a utility, not a
+  // local service: 15 tools x 283 cities produced 4,245 pages that were
+  // near-identical to the country-level pages and had no inbound links.
+  // The country tool pages carry the full local context instead.
+  cityTools: false,
   cityServices: [],
   previewCountries: [],
   previewCities: [],
@@ -148,13 +153,16 @@ export const CORE_CITY_SERVICES = [
 
 /**
  * The 'preview' tier: a coherent slice small enough to publish for review.
- * Eight full countries, twelve cities, the twelve services with local intent,
- * and a thin content layer. Everything outside resolves to the canonical
- * domain rather than a 404.
+ *
+ * Three full countries, six cities, the six services with local intent and a
+ * thin content layer — roughly 200 MB, which is what the public host accepts
+ * for a static archive. Every page type is represented, the markets differ in
+ * currency, language and direction, and anything outside the slice resolves
+ * to the canonical domain rather than a 404.
  */
-export const PREVIEW_COUNTRIES = ['uk', 'uae', 'pk', 'de'];
+export const PREVIEW_COUNTRIES = ['uk', 'uae', 'de'];
 export const PREVIEW_CITIES = [
-  'london', 'manchester', 'dubai', 'abu-dhabi', 'karachi', 'lahore', 'berlin', 'munich',
+  'london', 'manchester', 'dubai', 'abu-dhabi', 'berlin', 'munich',
 ];
 const PREVIEW_CITY_SERVICES = [
   'website-design-services', 'seo-services', 'local-seo-services',
@@ -195,8 +203,19 @@ export function loadConfig(overrides: Partial<BuildConfig> = {}): BuildConfig {
     tier,
     ...overrides,
   };
+  // Which countries the preview tier publishes. Overridable so a specific
+  // set of markets can be cut for a review without editing the source.
+  const previewCountries = process.env.BUILD_PREVIEW_COUNTRIES
+    ? process.env.BUILD_PREVIEW_COUNTRIES.split(',').map((c) => c.trim()).filter(Boolean)
+    : base.previewCountries;
+  const previewCities = process.env.BUILD_PREVIEW_CITIES
+    ? process.env.BUILD_PREVIEW_CITIES.split(',').map((c) => c.trim()).filter(Boolean)
+    : base.previewCities;
+
   return {
     ...base,
+    previewCountries,
+    previewCities,
     postsPerLocation: Number.isFinite(envPosts) && envPosts > 0 ? envPosts : base.postsPerLocation,
     casesPerLocation: Number.isFinite(envCases) && envCases > 0 ? envCases : base.casesPerLocation,
     postsPerCountry: Number(process.env.BUILD_POSTS_PER_COUNTRY) || base.postsPerCountry,
@@ -819,14 +838,27 @@ export function generatePosts(config: BuildConfig): Pair<GeneratedPost, Omit<Reg
     // Within a scope every post must be a distinct angle on a distinct
     // keyword. The redesign topics take the first slots so each region gets
     // exactly one post per redesign keyword; the remaining slots walk the
-    // general archetypes with a service offset that never repeats.
+    // general archetypes.
+    //
+    // The rotation is driven by the *occurrence* of an archetype inside the
+    // scope, not by the raw loop index. Indexed off the loop index, the
+    // archetype, the service and the industry each came back around on their
+    // own cycle, and every few posts the triple repeated exactly — which is
+    // how a scope ended up with the same article under two slugs.
     const redesignCount = Math.min(REDESIGN_TOPICS.length, depth);
+    const scopeIdx = scopes.indexOf(scope);
     for (let i = 0; i < depth; i++) {
       const isRedesign = i < redesignCount;
-      const type: PostType = isRedesign ? 'redesign' : POST_TYPES[i % POST_TYPES.length];
+      const generalIndex = isRedesign ? 0 : i - redesignCount;
+      const typeIdx = isRedesign ? 0 : generalIndex % POST_TYPES.length;
+      // How many times this archetype has already appeared in this scope.
+      const occurrence = isRedesign ? 0 : Math.floor(generalIndex / POST_TYPES.length);
+      const type: PostType = isRedesign ? 'redesign' : POST_TYPES[typeIdx];
       const slugs = SERVICE_FOR_TYPE[type];
-      const service = SERVICE_BY_SLUG[slugs[(i * 3) % slugs.length]] || SERVICE_BY_SLUG[''];
-      const industry = INDUSTRIES[(i * 3 + scopes.indexOf(scope)) % INDUSTRIES.length];
+      const service = SERVICE_BY_SLUG[slugs[(scopeIdx + occurrence + typeIdx) % slugs.length]] || SERVICE_BY_SLUG[''];
+      // A step of five keeps consecutive occurrences of the same archetype on
+      // different industries for as long as the industry list allows.
+      const industry = INDUSTRIES[(scopeIdx * 5 + occurrence * 5 + typeIdx) % INDUSTRIES.length];
 
       const p = generatePost({
         service,
@@ -834,9 +866,12 @@ export function generatePosts(config: BuildConfig): Pair<GeneratedPost, Omit<Reg
         city: scope.city,
         industry,
         type,
-        angle: isRedesign ? i : undefined,
+        angle: isRedesign ? i : (occurrence + scopeIdx) % ANGLES_PER_TYPE,
         seedKey: `${scope.prefix}|${i}|${type}`,
-        serviceUrl: serviceUrl(scope.country, service.slug, scope.city),
+        // The link has to point at a page that is actually published. In the
+        // 'cdn' tier only twelve services keep a city-level page, so a city
+        // post linking to a service without one resolves up to the country.
+        serviceUrl: resolveServiceLink(locationPrefix(scope.country, scope.city), service.slug),
         blogIndexUrl: resolveStatic(scope.prefix, 'blog'),
       });
 

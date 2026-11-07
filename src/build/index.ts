@@ -19,7 +19,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { SITE, ORIGIN, abs } from '../config/site.js';
+import { SITE, ORIGIN, abs, BASE_PATH } from '../config/site.js';
 import { esc, isoDate, jsonLdBlock, readingTime, truncate, slugify } from '../lib/html.js';
 import { buildTitle, buildDescription, buildAlternates, validateMeta, Meta } from '../lib/seo.js';
 import { composeTitle } from '../lib/keywords.js';
@@ -55,6 +55,7 @@ import { section, sectionHead, grid, ctaBand, faqBlock, linkCloud, coverArt, bre
 import { hero } from '../render/hero.js';
 
 import { buildRegistry, loadConfig, RegistryEntry, BuildConfig, PageType } from './registry.js';
+import { setCityServiceSlugs, setPublishedCountries, publishedCountries } from '../lib/routing.js';
 import { COUNTRIES, HOME_COUNTRY, PREFIXED_COUNTRIES, Country, City } from '../data/regions.js';
 import { SERVICES, PAGE_SERVICES, SERVICE_BY_SLUG, Service, servicesByCategory, Faq } from '../data/services.js';
 import { packagesFor, formatPrice, priceForSchema, SEO_PACKAGES, PPC_PACKAGES, STANDARD_TIERS, Package } from '../data/packages.js';
@@ -113,10 +114,25 @@ function externalise(html: string): string {
 async function writePage(urlPath: string, html: string): Promise<void> {
   const file = outPathFor(urlPath);
   await mkdir(path.dirname(file), { recursive: true });
-  const min = minifyHtml(externalise(html));
+  const min = minifyHtml(applyBasePath(externalise(html)));
   rawBytes += Buffer.byteLength(html);
   await writeFile(file, min, 'utf8');
   pageCount += 1;
+}
+
+/**
+ * Prefix every root-relative link and asset reference with the deployment
+ * sub-path.
+ *
+ * GitHub Pages serves a project site from `/<repo>/`, so a page that links to
+ * `/assets/css/app.css` would 404 — the browser asks the domain root, not
+ * the project directory. Absolute URLs (canonicals, hreflang, schema, the
+ * social cards) are left alone: they already point at the canonical domain
+ * and must stay that way.
+ */
+function applyBasePath(html: string): string {
+  if (!BASE_PATH) return html;
+  return html.replace(/\s(href|src)="(\/(?!\/)[^"]*)"/g, (_m, attr: string, p: string) => ` ${attr}="${BASE_PATH}${p}"`);
 }
 
 function log(msg: string) {
@@ -175,7 +191,7 @@ function recordSeo(path: string, type: string, meta: Meta, keyword: string, body
 
 function hreflangSet(serviceSlug: string, city?: City, country?: Country): { hreflang: string; href: string }[] {
   const links: { hreflang: string; path: string }[] = [{ hreflang: 'en-us', path: serviceUrl(HOME_COUNTRY, serviceSlug) }];
-  for (const c of PREFIXED_COUNTRIES) {
+  for (const c of publishedCountries()) {
     links.push({ hreflang: c.code.toLowerCase(), path: serviceUrl(c, serviceSlug) });
   }
   return buildAlternates(serviceUrl(country || HOME_COUNTRY, serviceSlug, city), links);
@@ -188,6 +204,18 @@ function hreflangSet(serviceSlug: string, city?: City, country?: Country): { hre
 async function main() {
   const t0 = Date.now();
   const config = loadConfig();
+  // Tell the link resolver which city-level service pages this build
+  // publishes, so a link never points at a page that was not written.
+  setCityServiceSlugs(
+    config.cityServiceFilter.length
+      ? config.cityServiceFilter
+      : config.cityServices.length
+        ? config.cityServices
+        : 'all',
+  );
+  // The preview tier publishes a subset of the markets. The header and the
+  // hreflang set list only what is actually in the build.
+  setPublishedCountries(config.previewCountries.length ? config.previewCountries : 'all');
 
   log('▸ Cleaning dist/');
   // The workspace filesystem can report ENOTEMPTY while a previous tree is
@@ -268,7 +296,7 @@ async function main() {
       content: notFoundPage({ prefix: '', hue: 190, path: '/404.html' }),
       path: '/404.html',
     });
-    await writeFile(path.join(DIST, '404.html'), minifyHtml(externalise(html)), 'utf8');
+    await writeFile(path.join(DIST, '404.html'), minifyHtml(applyBasePath(externalise(html))), 'utf8');
     pageCount += 1;
   }
 
@@ -291,6 +319,7 @@ async function main() {
 
   log('▸ Writing SEO report…');
   await writeSeoReport(DIST);
+  await writeBuildMeta(DIST);
 
   // ── Internal link integrity ─────────────────────────────────────────────
   // Cheaper and far more useful than crawling: every URL the registry knows
@@ -314,9 +343,14 @@ async function main() {
         if (!href || /^(#|mailto:|tel:|javascript:|data:)/i.test(href) || /^https?:\/\//i.test(href)) continue;
         const clean = href.split('#')[0].split('?')[0];
         if (!clean) continue;
-        if (!knownPaths.has(clean) && !knownFiles.has(clean) && !clean.startsWith('/uploads/') && !clean.startsWith('/assets/')) {
+        // The rendered link carries the deployment sub-path; the registry
+        // holds canonical paths, so strip it before resolving.
+        const target = BASE_PATH && (clean === BASE_PATH || clean.startsWith(`${BASE_PATH}/`))
+          ? clean.slice(BASE_PATH.length) || '/'
+          : clean;
+        if (!knownPaths.has(target) && !knownFiles.has(target) && !target.startsWith('/uploads/') && !target.startsWith('/assets/')) {
           brokenTotal += 1;
-          if (brokenSamples.length < 15) brokenSamples.push(`${e.path} -> ${clean}`);
+          if (brokenSamples.length < 15) brokenSamples.push(`${e.path} -> ${target}`);
         }
       }
     }));
@@ -622,7 +656,7 @@ function renderCountryHub(entry: RegistryEntry, country: Country, ctx: RenderCtx
     description: buildDescription(kw, `Custom websites, SEO and digital marketing for ${country.longName} businesses. Priced in ${country.currency} with fast delivery and unlimited revisions.`),
     path: entry.path,
     keywords: [kw, `web design ${country.name}`, `web design company ${country.longName}`, `SEO services ${country.longName}`],
-    alternates: buildAlternates(entry.path, [{ hreflang: 'en-us', path: '/' }].concat(PREFIXED_COUNTRIES.map((c) => ({ hreflang: c.code.toLowerCase(), path: countryHubUrl(c) })))),
+    alternates: buildAlternates(entry.path, [{ hreflang: 'en-us', path: '/' }].concat(publishedCountries().map((c) => ({ hreflang: c.code.toLowerCase(), path: countryHubUrl(c) })))),
   });
 
   const nodes: Json[] = [
@@ -1259,7 +1293,7 @@ function renderPackages(country: Country, ctx: RenderCtx): string {
   const kw = 'Web Design Packages';
   const price = (u: number, pkgId?: string) => formatPrice(u, country, pkgId);
   const content = packagesIndexPage({
-    prefix: '', crumbs: [{ name: 'Home', url: '/' }, { name: 'Packages', url: '/packages/' }],
+    prefix: '', crumbs: [{ name: 'Home', url: '/' }, { name: 'Packages', url: `${BASE_PATH}/packages/` }],
     heading: 'Pricing & Packages',
     sub: 'Every package is a complete, sellable product with a published feature list. Fixed prices — no hourly billing, no open-ended scope, no surprise change orders.',
     country, price, hue: 145,
@@ -1272,8 +1306,8 @@ function renderPackages(country: Country, ctx: RenderCtx): string {
   });
   const nodes: Json[] = [
     ...baseGraph(),
-    collectionPageNode(absPath, meta.title, meta.description, [{ name: 'Home', url: '/' }, { name: 'Packages', url: '/packages/' }]),
-    breadcrumbNode(absPath, [{ name: 'Home', url: '/' }, { name: 'Packages', url: '/packages/' }]),
+    collectionPageNode(absPath, meta.title, meta.description, [{ name: 'Home', url: '/' }, { name: 'Packages', url: `${BASE_PATH}/packages/` }]),
+    breadcrumbNode(absPath, [{ name: 'Home', url: '/' }, { name: 'Packages', url: `${BASE_PATH}/packages/` }]),
     {
       '@type': 'OfferCatalog',
       '@id': `${absPath}#catalog`,
@@ -1347,7 +1381,7 @@ function renderContact(country: Country, city: City | undefined, ctx: RenderCtx)
 function renderFreeAudit(ctx: RenderCtx): string {
   const absPath = abs('/free-audit/');
   const kw = 'Free SEO Audit';
-  const content = freeAuditPage({ prefix: '', crumbs: [{ name: 'Home', url: '/' }, { name: 'Free Audit', url: '/free-audit/' }], hue: 145 });
+  const content = freeAuditPage({ prefix: '', crumbs: [{ name: 'Home', url: '/' }, { name: 'Free Audit', url: `${BASE_PATH}/free-audit/` }], hue: 145 });
   const meta = baseMeta({
     title: composeTitle(kw, 'No Obligation'),
     description: buildDescription(kw, 'Get a free, detailed SEO and website audit within 48 hours. Technical health, Core Web Vitals, on-page SEO, local visibility and AI search presence.'),
@@ -1357,7 +1391,7 @@ function renderFreeAudit(ctx: RenderCtx): string {
   recordSeo('/free-audit/', 'free-audit', meta, kw);
   return documentShell({
     meta,
-    schema: graph([...baseGraph(), collectionPageNode(absPath, meta.title, meta.description, [{ name: 'Home', url: '/' }, { name: 'Free Audit', url: '/free-audit/' }]), breadcrumbNode(absPath, [{ name: 'Home', url: '/' }, { name: 'Free Audit', url: '/free-audit/' }]), faqCollectionNode(absPath, kw, [
+    schema: graph([...baseGraph(), collectionPageNode(absPath, meta.title, meta.description, [{ name: 'Home', url: '/' }, { name: 'Free Audit', url: `${BASE_PATH}/free-audit/` }]), breadcrumbNode(absPath, [{ name: 'Home', url: '/' }, { name: 'Free Audit', url: `${BASE_PATH}/free-audit/` }]), faqCollectionNode(absPath, kw, [
       { q: 'Is the audit really free?', a: 'Yes. There is no charge and no obligation to work with us afterwards.' },
       { q: 'How fast will I get it?', a: 'Within 48 hours of submitting your URL.' },
       { q: 'What do you need from me?', a: 'Your website URL and a little context about your goals.' },
@@ -1612,7 +1646,12 @@ function renderCompanyPage(entry: RegistryEntry, country: Country, city: City | 
 
   const meta = baseMeta({
     title: composeTitle(city ? `${page.keyword} ${city.name}` : country.slug ? `${page.keyword} ${country.longName}` : page.keyword, country.longName, country.name),
-    description: buildDescription(page.keyword, page.description.slice(0, 130)),
+    description: buildDescription(
+      page.keyword,
+      country.slug
+        ? `${page.description.slice(0, 74)} In ${country.longName}: ${country.note} Priced in ${country.currency}.`
+        : page.description.slice(0, 130),
+    ),
     path: entry.path,
     keywords: [page.keyword, page.title, ...(city ? [city.name, city.region] : country.slug ? [country.longName] : [])],
     faqs: page.faqs,
@@ -1728,7 +1767,12 @@ function renderComparisonPage(entry: RegistryEntry, country: Country, city: City
 
   const meta = baseMeta({
     title: composeTitle(city ? `${pair.keyword} in ${city.name}` : country.slug ? `${pair.keyword} ${country.longName}` : pair.keyword, country.longName, country.name),
-    description: buildDescription(pair.keyword, pair.intro.slice(0, 130)),
+    description: buildDescription(
+      pair.keyword,
+      country.slug
+        ? `${pair.intro.slice(0, 74)} In ${country.longName}: ${country.note} Priced in ${country.currency}.`
+        : pair.intro.slice(0, 130),
+    ),
     path: entry.path,
     keywords: [pair.keyword, ...pair.rows.slice(0, 4).map((r) => r.label.toLowerCase())],
     faqs: pair.faqs,
@@ -1970,7 +2014,7 @@ async function writeSearchIndex(registry: RegistryEntry[], distDir: string) {
     .filter((r) => ['service', 'home', 'blog-post', 'case-study', 'portfolio-item', 'industry', 'country', 'city', 'packages', 'about', 'contact', 'tool', 'comparison', 'company'].includes(r.type))
     .map((r) => ({
       t: r.title,
-      u: r.path,
+      u: `${BASE_PATH}${r.path}`,
       k: r.keyword,
       y: r.type,
     }));
@@ -2323,25 +2367,40 @@ async function writeLlmsDetailed(registry: RegistryEntry[]) {
   await writeFile(path.join(DIST, 'llms-detailed.txt'), lines.join('\n'), 'utf8');
 }
 
+/**
+ * Record how this build was made, so the audit and any later tool know the
+ * deployment sub-path and the canonical origin without guessing.
+ */
+async function writeBuildMeta(dir: string) {
+  const meta = {
+    basePath: BASE_PATH,
+    origin: ORIGIN,
+    tier: 'build',
+    pages: pageCount,
+    builtAt: new Date().toISOString(),
+  };
+  await writeFile(path.join(dir, 'build-meta.json'), JSON.stringify(meta, null, 2), 'utf8');
+}
+
 async function writeManifest() {
   const manifest = {
     name: SITE.name,
     short_name: 'Website Design Co.',
     description: SITE.shortDescription,
-    start_url: '/',
-    scope: '/',
+    start_url: `${BASE_PATH}/`,
+    scope: `${BASE_PATH}/`,
     display: 'standalone',
     background_color: SITE.themeColor,
     theme_color: SITE.themeColor,
     icons: [
-      { src: '/assets/img/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-      { src: '/assets/img/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { src: '/assets/img/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { src: `${BASE_PATH}/assets/img/favicon.svg`, sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+      { src: `${BASE_PATH}/assets/img/icon-192.png`, sizes: '192x192', type: 'image/png' },
+      { src: `${BASE_PATH}/assets/img/icon-512.png`, sizes: '512x512', type: 'image/png' },
     ],
     shortcuts: [
-      { name: 'Get a Quote', url: '/contact/' },
-      { name: 'Packages', url: '/packages/' },
-      { name: 'Free Audit', url: '/free-audit/' },
+      { name: 'Get a Quote', url: `${BASE_PATH}/contact/` },
+      { name: 'Packages', url: `${BASE_PATH}/packages/` },
+      { name: 'Free Audit', url: `${BASE_PATH}/free-audit/` },
     ],
   };
   await writeFile(path.join(DIST, 'manifest.webmanifest'), JSON.stringify(manifest, null, 2), 'utf8');
