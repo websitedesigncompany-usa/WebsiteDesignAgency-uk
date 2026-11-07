@@ -155,7 +155,11 @@ export function icon(name: string, opts: IconOpts | string = {}, strokeWidth?: n
   const title = o.title
     ? `<title>${esc(o.title)}</title>`
     : '';
-  return `<span class="ico${anim}" aria-hidden="${o.title ? 'false' : 'true'}">${title}<svg class="${esc(cls)}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${o.strokeWidth || 1.8}" stroke-linecap="round" stroke-linejoin="round" role="presentation">${d}</svg></span>`;
+  // The stroke attributes live in the stylesheet. Repeating them on every
+  // one of the ~470 icons on a page cost 48 KB of HTML per page, and the
+  // answer is identical every time.
+  const sw = o.strokeWidth && o.strokeWidth !== 1.8 ? ` style="stroke-width:${o.strokeWidth}"` : '';
+  return `<span class="ico${anim}" aria-hidden="${o.title ? 'false' : 'true'}">${title}<svg class="${esc(cls)}" viewBox="0 0 24 24" role="presentation"${sw}>${d}</svg></span>`;
 }
 
 export function hasIcon(name: string): boolean {

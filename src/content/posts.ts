@@ -18,6 +18,8 @@ import { City, Country } from '../data/regions.js';
 import { Service } from '../data/services.js';
 import { INDUSTRIES, Industry } from '../data/industries.js';
 import { seededRandom, pick, slugify, readingTime, wordCount } from '../lib/html.js';
+import { POST_ANGLES, PostAngle } from './angles.js';
+import { LOCAL_CONTEXT } from '../data/local-context.js';
 
 /**
  * Redesign topics.
@@ -460,96 +462,228 @@ function baseDate(seed: string): string {
 // Title / keyword generation per post type
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Short service labels used inside keywords.
+ *
+ * The full service name ("Ecommerce Website Design Services") is right for a
+ * service page and wrong for a blog keyword, where every character competes
+ * with the location and the angle.
+ */
+const SERVICE_KEYWORD: Record<string, string> = {
+  '': 'Website Design',
+  'website-design-services': 'Website Design',
+  'website-development': 'Web Development',
+  'wordpress-website-design': 'WordPress Design',
+  'ecommerce-website-design': 'Ecommerce Design',
+  'shopify-website-design': 'Shopify Design',
+  'woocommerce-website-design': 'WooCommerce Design',
+  'landing-page-design': 'Landing Page Design',
+  '3d-website-design': '3D Website Design',
+  'website-maintenance': 'Website Maintenance',
+  'web-hosting-services': 'Web Hosting',
+  'logo-design-services': 'Logo Design',
+  '3d-logo-design': '3D Logo Design',
+  'branding-services': 'Branding',
+  'seo-services': 'SEO',
+  'seo-geo-aeo-services': 'SEO & AI Search',
+  'ai-integration-services': 'AI Integration',
+  'local-seo-services': 'Local SEO',
+  'google-ads-management': 'Google Ads',
+  'ppc-advertising-services': 'PPC Advertising',
+  'social-media-marketing': 'Social Media',
+  'content-marketing-services': 'Content Marketing',
+  'email-marketing-services': 'Email Marketing',
+  'ui-ux-design': 'UI & UX',
+  'conversion-rate-optimization': 'Conversion Optimization',
+  'website-redesign': 'Website Redesign',
+  'rebranding-services': 'Rebranding',
+  'logo-and-website-design': 'Logo & Website Design',
+  'web-security-services': 'Web Security',
+};
+
+/**
+ * Even shorter service labels, for when the title budget is tight.
+ *
+ * "Ecommerce Design: Treating Content as an Afterthought" is a good
+ * keyword but not a legal title. "Ecommerce: Treating Content as an
+ * Afterthought" is both, and means the same thing to a searcher.
+ */
+const SERVICE_KEYWORD_SHORT: Record<string, string> = {
+  '': 'Web Design',
+  'website-design-services': 'Web Design',
+  'website-development': 'Web Development',
+  'wordpress-website-design': 'WordPress',
+  'ecommerce-website-design': 'Ecommerce',
+  'shopify-website-design': 'Shopify',
+  'woocommerce-website-design': 'WooCommerce',
+  'landing-page-design': 'Landing Page',
+  '3d-website-design': '3D Design',
+  'website-maintenance': 'Maintenance',
+  'web-hosting-services': 'Hosting',
+  'logo-design-services': 'Logo Design',
+  '3d-logo-design': '3D Logo',
+  'branding-services': 'Branding',
+  'seo-services': 'SEO',
+  'seo-geo-aeo-services': 'SEO & AI',
+  'ai-integration-services': 'AI',
+  'local-seo-services': 'Local SEO',
+  'google-ads-management': 'Google Ads',
+  'ppc-advertising-services': 'PPC',
+  'social-media-marketing': 'Social Media',
+  'content-marketing-services': 'Content',
+  'email-marketing-services': 'Email',
+  'ui-ux-design': 'UI/UX',
+  'conversion-rate-optimization': 'CRO',
+  'website-redesign': 'Redesign',
+  'rebranding-services': 'Rebranding',
+  'logo-and-website-design': 'Logo & Web',
+  'web-security-services': 'Security',
+};
+
+/** The short label for a service, for use inside a keyword. */
+function serviceKeyword(service: Service): string {
+  return SERVICE_KEYWORD[service.slug] || service.name;
+}
+
+interface TitleParts {
+  /** The service's short label. */
+  sk: string;
+  /** A shorter label for the same service, used when the title is tight. */
+  skShort: string;
+  /** The angle's keyword fragment. */
+  frag: string;
+  /** The industry name. */
+  ind: string;
+}
+
+/**
+ * The keyword cores for each archetype, longest first.
+ *
+ * A post's keyword has to be a contiguous run at the front of its title —
+ * that is what the SEO title check verifies — so the angle fragment always
+ * sits where truncation cannot remove it. Each archetype offers a shorter
+ * fallback for the combinations that do not fit in sixty characters.
+ */
+function keywordCores(type: PostType, p: TitleParts): string[] {
+  const { sk, skShort, frag, ind } = p;
+  switch (type) {
+    case 'how-to':
+    case 'cost-guide':
+    case 'local-guide':
+      return [`${sk} ${frag}`, `${skShort} ${frag}`, `${frag} for ${skShort}`, frag];
+    case 'comparison':
+      return [`${sk} vs DIY: ${frag}`, `${skShort} vs DIY: ${frag}`, `${frag} for ${skShort}`, frag];
+    case 'best-of':
+      return [`Best ${sk} for ${ind}: ${frag}`, `Best ${skShort} for ${ind}: ${frag}`, `Best ${skShort}: ${frag}`, frag];
+    case 'mistakes':
+      return [`${sk} Mistakes: ${frag}`, `${skShort} Mistakes: ${frag}`, `${skShort}: ${frag}`, frag];
+    case 'trend-report':
+      return [`${sk} Trends ${new Date().getFullYear()}: ${frag}`, `${skShort} Trends ${new Date().getFullYear()}: ${frag}`, `${skShort}: ${frag}`, frag];
+    case 'explainer':
+      return [`What Is ${sk}: ${frag}`, `What Is ${skShort}: ${frag}`, `${frag} for ${skShort}`, frag];
+    case 'checklist':
+      return [`${sk} Checklist: ${frag}`, `${skShort} Checklist: ${frag}`, `${skShort}: ${frag}`, frag];
+    case 'industry-playbook':
+      return [`${ind} ${sk}: ${frag}`, `${ind} ${skShort}: ${frag}`, `${ind}: ${frag}`, frag];
+    case 'seasonal':
+      return [`Seasonal ${sk}: ${frag}`, `Seasonal ${skShort}: ${frag}`, `${frag} for ${skShort}`, frag];
+    case 'regulatory':
+      return [`${sk} Compliance: ${frag}`, `${skShort} Compliance: ${frag}`, `${skShort}: ${frag}`, frag];
+    default:
+      return [sk, skShort, frag];
+  }
+}
+
+/**
+ * Replace the {token} placeholders in a template.
+ *
+ * Tokens: kw, loc, locShort, ind, s, currency, country, price, timeline.
+ */
+function fill(template: string, tokens: Record<string, string>): string {
+  return template.replace(/\{(\w+)\}/g, (whole, key) => tokens[key] ?? whole);
+}
+
 function buildTitles(ctx: GenContext): { title: string; primaryKeyword: string; h1: string; excerpt: string; description: string } {
   const { service, country, city, industry, type } = ctx;
   const s = service.name;
   const loc = city ? city.name : country.slug ? country.longName : 'the United States';
   const locShort = city ? city.name : country.name;
 
-
-  const price = `$${service.fromPrice}`;
-
-  // Titles LEAD with the exact primary keyword — the brief requires the
-  // keyword at position 0 of the meta title, and a natural keyword-first
-  // phrasing reads better than a prefix-stuffed one.
-  const T: Record<PostType, { title: string; kw: string }> = {
-    redesign: {
-      title: REDESIGN_TOPICS[0].title,
-      kw: REDESIGN_TOPICS[0].keyword,
-    },
-    'how-to': {
-      title: `${s} in ${loc}: How to Choose the Right Provider`,
-      kw: `${s} in ${loc}`,
-    },
-    'cost-guide': {
-      title: `${s} Cost in ${loc} (${new Date().getFullYear()})`,
-      kw: `${s} Cost in ${loc}`,
-    },
-    comparison: {
-      title: `${s} vs DIY: An Honest Comparison`,
-      kw: `${s} vs DIY`,
-    },
-    'best-of': {
-      title: `Best ${s} for ${industry.name} in ${locShort}`,
-      kw: `Best ${s} for ${industry.name}`,
-    },
-    mistakes: {
-      title: `${s} Mistakes That Cost ${locShort} Businesses`,
-      kw: `${s} Mistakes`,
-    },
-    'local-guide': {
-      title: `${s} in ${loc}: Local Guide`,
-      kw: `${s} in ${loc}`,
-    },
-    'trend-report': {
-      title: `${s} Trends ${new Date().getFullYear()}: What Changed`,
-      kw: `${s} Trends ${new Date().getFullYear()}`,
-    },
-    explainer: {
-      title: `What Is ${s}? A Plain-English Explanation`,
-      kw: `What Is ${s}`,
-    },
-    checklist: {
-      title: `${s} Checklist for ${locShort} Businesses`,
-      kw: `${s} Checklist`,
-    },
-    'industry-playbook': {
-      title: `${industry.name} ${s}: ${locShort} Playbook`,
-      kw: `${industry.name} ${s}`,
-    },
-    seasonal: {
-      title: `Seasonal ${s}: Timing Your Project Right`,
-      kw: `Seasonal ${s}`,
-    },
-    regulatory: {
-      title: `${s} Compliance for ${loc} Businesses`,
-      kw: `${s} Compliance`,
-    },
-  };
-
-  const picked = T[type];
-  // Trim the tail (never the leading keyword) to fit the title budget.
-  let title = picked.title;
-  if (title.length > 60) {
-    const parts = title.split(' ');
-    while (parts.length > 1 && parts.join(' ').length > 60) parts.pop();
-    title = parts.join(' ');
+  if (type === 'redesign') {
+    // The redesign topics carry their own keyword and title.
+    const topic = REDESIGN_TOPICS[(ctx.angle ?? 0) % REDESIGN_TOPICS.length];
+    const kw = city ? `${topic.keyword} in ${city.name}` : country.slug ? `${topic.keyword} in ${country.longName}` : topic.keyword;
+    const title = city ? `${topic.title} in ${city.name}` : country.slug ? `${topic.title} in ${country.longName}` : `${topic.title} (${new Date().getFullYear()})`;
+    return {
+      title,
+      primaryKeyword: kw,
+      h1: title,
+      excerpt: `${topic.title} in ${loc} — what it actually involves, what it costs, and what to get right before you start.`,
+      description: truncateWords(`${topic.title} in ${loc}: a practical, region-specific guide from a digital agency that does the work — scope, cost, timeline and the mistakes that cost ${loc} businesses money.`, 157),
+    };
   }
 
+  // The angle decides the keyword fragment, which is what makes two posts of
+  // the same archetype target two different searches.
+  const pool = POST_ANGLES[type] || [];
+  const angle = pool.length ? pool[(ctx.angle ?? 0) % pool.length] : undefined;
+  const frag = angle ? angle.keyword : '';
+
+  const cores = keywordCores(type, {
+    sk: serviceKeyword(service),
+    skShort: SERVICE_KEYWORD_SHORT[service.slug] || serviceKeyword(service),
+    frag,
+    ind: industry.name,
+  });
+
+  // The location always goes in the title. Two countries targeting the same
+  // keyword must not publish the same title, or they compete with each
+  // other as well as with everyone else.
+  const locSuffix = ` in ${loc}`;
+  let core = cores[0];
+  let title = `${core}${locSuffix}`;
+  if (title.length > 60) {
+    // Try the shorter cores, keeping the location. The last core is the bare
+    // angle fragment, which is short enough to fit with any location.
+    for (const candidate of cores) {
+      const t = `${candidate}${locSuffix}`;
+      if (t.length <= 60) {
+        core = candidate;
+        title = t;
+        break;
+      }
+    }
+    if (title.length > 60) {
+      core = cores[cores.length - 1];
+      title = `${core}${locSuffix}`;
+    }
+  }
+  // A handful of combinations produce a very short title — "SEO Brief in
+  // Kuwait" is nineteen characters. Rather than shorten the keyword, extend
+  // the title with the sector, which is what the reader wants to see anyway.
+  if (title.length < 20) {
+    title += title.includes(industry.name) ? ' Guide' : ` for ${industry.name}`;
+  }
+  const kw = core;
+
+  // The market is named at the front of every excerpt. The meta description is
+  // the keyword plus this excerpt, truncated at 159 characters — so if the
+  // market is at the back, it is the first thing cut, and every country
+  // ends up publishing the same description.
   const excerpts: Record<PostType, string> = {
     redesign: '',
-    'how-to': `A practical, step-by-step framework for choosing ${s.toLowerCase()} in ${loc} — what to ask, what to avoid, and where the money actually goes.`,
+    'how-to': `In ${loc}, a step-by-step framework for choosing ${s.toLowerCase()} — what to ask, what to avoid, and where the money actually goes.`,
     'cost-guide': `Real ${loc} market pricing for ${s.toLowerCase()}, broken down by scope. What you should pay, what drives the price, and where providers hide costs.`,
-    comparison: `Should you build it yourself or hire a professional for ${s.toLowerCase()}? An honest comparison of cost, time, risk and outcome.`,
-    'best-of': `The ${s.toLowerCase()} providers best suited to ${industry.name.toLowerCase()} businesses in ${locShort} — evaluated on portfolio, process, pricing and proof.`,
-    mistakes: `Seven ${s.toLowerCase()} mistakes we see most often in ${locShort}, and exactly how to avoid each one without raising your budget.`,
-    'local-guide': `Everything a ${locShort} business needs to know about ${s.toLowerCase()} — local search behaviour, expectations, pricing and how to pick well.`,
-    'trend-report': `What actually changed in ${s.toLowerCase()} in ${new Date().getFullYear()}, which changes matter, and which are just noise.`,
-    explainer: `${s} explained without the jargon — what it is, what it includes, what it costs and when you genuinely need it.`,
-    checklist: `A working ${s.toLowerCase()} checklist for ${locShort} businesses. Use it to brief a provider, or to audit what you already have.`,
-    'industry-playbook': `How to approach ${s.toLowerCase()} when you are in ${industry.name.toLowerCase()} — the specific requirements, mistakes and opportunities in your sector.`,
-    seasonal: `A timing-focused guide to ${s.toLowerCase()}, covering lead times, seasonal pricing and when to start so you are ready in time.`,
-    regulatory: `Accessibility, data and advertising compliance considerations for ${s.toLowerCase()} businesses operating in ${loc}.`,
+    comparison: `In ${locShort}, an honest comparison of building ${s.toLowerCase()} yourself against hiring a professional — cost, time, risk and outcome.`,
+    'best-of': `In ${locShort}, the ${s.toLowerCase()} providers best suited to ${industry.name.toLowerCase()} businesses — evaluated on portfolio, process, pricing and proof.`,
+    mistakes: `In ${locShort}, seven ${s.toLowerCase()} mistakes we see most often, and exactly how to avoid each one without raising your budget.`,
+    'local-guide': `In ${locShort}, everything a business needs to know about ${s.toLowerCase()} — local search behaviour, expectations, pricing and how to pick well.`,
+    'trend-report': `In ${locShort}, what actually changed in ${s.toLowerCase()} in ${new Date().getFullYear()}, which changes matter, and which are just noise.`,
+    explainer: `In ${locShort}, ${s.toLowerCase()} explained without the jargon — what it is, what it includes, what it costs and when you genuinely need it.`,
+    checklist: `In ${locShort}, a working ${s.toLowerCase()} checklist. Use it to brief a provider, or to audit what you already have.`,
+    'industry-playbook': `In ${locShort}, how to approach ${s.toLowerCase()} as a ${industry.name.toLowerCase()} business — the specific requirements, mistakes and opportunities in your sector.`,
+    seasonal: `In ${locShort}, a timing-focused guide to ${s.toLowerCase()} — lead times, seasonal pricing and when to start so you are ready in time.`,
+    regulatory: `In ${locShort}, the accessibility, data and advertising compliance considerations for ${s.toLowerCase()} businesses.`,
   };
 
   const descriptions: Record<PostType, string> = {
@@ -568,11 +702,13 @@ function buildTitles(ctx: GenContext): { title: string; primaryKeyword: string; 
     regulatory: `Accessibility and compliance requirements for ${s.toLowerCase()} businesses in ${loc} — what you must meet and what it actually costs.`,
   };
 
-  let description = descriptions[type];
+  // The description leads with the keyword so it is never a duplicate of a
+  // sibling post's description.
+  let description = `${kw} — ${descriptions[type]}`;
   if (description.length < 101) description = `${description} Free guides from ${SITE_SHORT}.`;
   if (description.length > 159) description = truncateWords(description, 157);
 
-  return { title, primaryKeyword: picked.kw, h1: title, excerpt: excerpts[type], description };
+  return { title, primaryKeyword: kw, h1: title, excerpt: excerpts[type], description };
 }
 
 const SITE_SHORT = 'Website Design Company';
@@ -591,6 +727,7 @@ export function generatePost(ctx: GenContext): GeneratedPost {
   const { service, country, city, industry, type, seedKey } = ctx;
   const loc = city ? city.name : country.slug ? country.longName : 'the United States';
   const locShort = city ? city.name : country.name;
+  const locLabel = loc;
 
   const author = pick(AUTHORS, seedKey + 'author');
   const date = baseDate(seedKey);
@@ -691,7 +828,7 @@ export function generatePost(ctx: GenContext): GeneratedPost {
         slug: slugBase,
         title: titleBase,
         primaryKeyword: kw,
-        description: `${topic.title} in ${locLabel}: a practical, region-specific guide from a digital agency that does the work — scope, cost, timeline and the mistakes that cost ${locLabel} businesses money.`,
+        description: truncateWords(`${topic.title} in ${locLabel}: a practical, region-specific guide from a digital agency that does the work — scope, cost, timeline and the mistakes that cost ${locLabel} businesses money.`, 157),
         excerpt: `${topic.title} in ${locLabel} — what it actually involves, what it costs, and what to get right before you start.`,
         date,
         modified: date,
@@ -945,8 +1082,84 @@ export function generatePost(ctx: GenContext): GeneratedPost {
       break;
   }
 
+  // ── The angle ────────────────────────────────────────────────────────────
+  // Every archetype has several angles. Without one, every post of the same
+  // archetype came out as the same article with the industry name swapped.
+  const anglePool = POST_ANGLES[type] || [];
+  const angle: PostAngle | undefined = anglePool.length
+    ? anglePool[(ctx.angle ?? 0) % anglePool.length]
+    : undefined;
+
+  const tokens = {
+    kw,
+    loc,
+    locShort,
+    ind: industry.name.toLowerCase(),
+    s: service.name.toLowerCase(),
+    currency: country.currency,
+    country: country.longName,
+    price: `$${service.fromPrice}`,
+    timeline: service.timeline,
+  };
+
+  if (angle) {
+    add(2, angle.heading);
+    blocks.push({
+      level: 3,
+      id: `angle-${angle.slug}`,
+      text: fill(angle.body, tokens),
+    });
+  }
+
+  // ── The sector ───────────────────────────────────────────────────────────
+  // Industry-specific facts, so two posts on the same archetype but for
+  // different sectors do not read as the same article.
+  add(2, `What this means for ${industry.name.toLowerCase()}`);
+  blocks.push({
+    level: 3,
+    id: 'sector-context',
+    text: `${industry.context} The buying trigger is usually ${industry.buyingTrigger.toLowerCase()}, and the metric that tells you whether any of this worked is ${industry.metric.toLowerCase()}.`,
+  });
+  blocks.push({
+    level: 3,
+    id: 'sector-objection',
+    text: `The objection we hear most from ${industry.plural.toLowerCase()} in ${locShort} is ${industry.objection} That deserves a straight answer on the page rather than a sales pitch, and the honest answer is usually to show the part of your process that addresses it.`,
+  });
+
+  // ── The market ───────────────────────────────────────────────────────────
+  // What is actually different about doing this in this market: the rules,
+  // the paperwork, the way people pay and how the dates are written.
+  const local = LOCAL_CONTEXT[country.code];
+  const note = REGION_NOTES[country.code];
+  if (local || note) {
+    add(2, `Doing this in ${locLabel}`);
+    const ctxBits: string[] = [];
+    if (local) {
+      ctxBits.push(`Prices are quoted in ${country.currency}, tax is ${local.taxLabel.toLowerCase()} at ${local.taxRate}, and the number a business here puts on its paperwork is its ${local.idLabel}.`);
+      ctxBits.push(`Buyers pay with ${local.payments}, and companies are usually named ${local.naming}. Dates are written ${local.dateFormat}.`);
+    }
+    if (note) {
+      ctxBits.push(note.expectation);
+      ctxBits.push(note.compliance);
+    }
+    if (city) ctxBits.push(city.note);
+    blocks.push({
+      level: 3,
+      id: 'market-context',
+      text: ctxBits.join(' '),
+    });
+  }
+
   // FAQs
   faqs.push(...generateFaqs(ctx, kw, loc, locShort, title));
+
+  // The angle's own question, asked and answered on the page.
+  if (angle) {
+    faqs.push({
+      q: fill(angle.faq.q, tokens),
+      a: fill(angle.faq.a, tokens),
+    });
+  }
 
   const fullText = [
     title, excerpt,

@@ -10,7 +10,7 @@
  *   /uk/london/logo-design-services/ -> city service page
  */
 
-import { City, Country, COUNTRIES, HOME_COUNTRY, COUNTRY_BY_CODE } from '../data/regions.js';
+import { City, Country, COUNTRIES, HOME_COUNTRY, COUNTRY_BY_CODE, PREFIXED_COUNTRIES } from '../data/regions.js';
 import { ORIGIN } from '../config/site.js';
 
 /** Ensure a single leading slash and a trailing slash (directory-style URLs). */
@@ -36,11 +36,40 @@ export function resolveStatic(prefix: string, section: string, ...children: stri
   const segs = prefix.replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
   const bases: string[] = ['/'];
   for (let i = 0; i < segs.length; i++) bases.push(`/${segs.slice(0, i + 1).join('/')}/`);
+  const childRule = children.length ? CHILD_SCOPES[section] : undefined;
   for (const base of bases.reverse()) {
-    if (STATIC_MATRIX[section]?.has(base)) return url(base, section, ...children);
+    // A section's index and its children live at different scopes. The
+    // portfolio index is published for every country, but the portfolio
+    // projects themselves only exist at the root; the case-study index stops
+    // at the country, but the studies themselves exist per city. So the
+    // child rule decides, not the index rule.
+    const ok = childRule ? childRule(base) : STATIC_MATRIX[section]?.has(base);
+    if (!ok) continue;
+    return url(base, section, ...children);
   }
   return url('', section, ...children);
 }
+
+/**
+ * Where a section's child pages are published.
+ *
+ * A base is only accepted if the child itself exists there. Without this the
+ * resolver would happily return a URL for a page that was never published.
+ */
+const CHILD_SCOPES: Record<string, (base: string) => boolean> = {
+  // The portfolio projects are global — they exist at the root only.
+  portfolio: (base) => base === '/',
+  // Industry pages exist at the root and per country, never per city.
+  industries: (base) => base === '/' || COUNTRY_PREFIX_SET.has(base),
+  // A post exists at every scope that publishes a blog, city included.
+  blog: (base) => base === '/' || COUNTRY_PREFIX_SET.has(base) || CITY_PREFIX_SET.has(base),
+  // A case study exists at every scope too, even though the case-study
+  // *index* stops at the country.
+  'case-studies': (base) => base === '/' || COUNTRY_PREFIX_SET.has(base) || CITY_PREFIX_SET.has(base),
+  // Comparison pages and checkout pages are published at the root only.
+  compare: (base) => base === '/',
+  checkout: (base) => base === '/',
+};
 
 /**
  * Resolve a child page (e.g. an industry detail) for a location prefix,
@@ -61,30 +90,51 @@ export function resolveChild(prefix: string, section: string, child: string): st
  * resolution never points at a URL that was not generated.
  */
 const COUNTRY_PREFIXES = COUNTRIES.filter((c) => c.slug).map((c) => `/${c.slug}/`);
+const COUNTRY_PREFIX_SET = new Set(COUNTRY_PREFIXES);
+
+/**
+ * Every city scope, derived from the region data.
+ *
+ * The United States has no country prefix, so its cities are a single
+ * segment. A city scope is where blog posts, case studies and city hubs
+ * actually live, so the resolver has to know about them — otherwise a link
+ * made from a city page walks up to the country scope and points at a
+ * slug that was never published there.
+ */
+const CITY_PREFIXES: string[] = COUNTRIES.flatMap((c) =>
+  c.cities.map((city) => (c.slug ? `/${c.slug}/${city.slug}/` : `/${city.slug}/`)),
+);
+const CITY_PREFIX_SET = new Set(CITY_PREFIXES);
 
 const STATIC_MATRIX: Record<string, Set<string>> = {
-  // Root-only sections
-  services: new Set(['/services/']),
-  packages: new Set(['/packages/']),
-  about: new Set(['/about/']),
-  contact: new Set(['/contact/']),
-  'free-audit': new Set(['/free-audit/']),
-  faq: new Set(['/faq/']),
-  locations: new Set(['/locations/']),
-  gallery: new Set(['/gallery/']),
-  'privacy-policy': new Set(['/privacy-policy/']),
-  'terms-of-service': new Set(['/terms-of-service/']),
-  'cookie-policy': new Set(['/cookie-policy/']),
-  checkout: new Set(['/checkout/']),
-  'thank-you': new Set(['/thank-you/']),
-  search: new Set(['/search/']),
-  // Root + every country. Entries are LOCATION PREFIXES, not section URLs —
-  // resolveStatic tests a base prefix against this set, then appends the section.
-  industries: new Set(['/', ...COUNTRY_PREFIXES]),
+  // Root-only sections. The keys are LOCATION PREFIXES, never section URLs —
+  // resolveStatic tests a base prefix against this set and then appends the
+  // section. Using '/about/' as a key would make a page at /about/ resolve to
+  // /about/about/.
+  services: new Set(['/']),
+  packages: new Set(['/']),
+  about: new Set(['/']),
+  contact: new Set(['/']),
+  'free-audit': new Set(['/']),
+  faq: new Set(['/']),
+  locations: new Set(['/']),
+  gallery: new Set(['/']),
+  'privacy-policy': new Set(['/']),
+  'terms-of-service': new Set(['/']),
+  'cookie-policy': new Set(['/']),
+  checkout: new Set(['/']),
+  'thank-you': new Set(['/']),
+  search: new Set(['/']),
+  // The industries index is published at the root only; the industry pages
+  // themselves are published per country.
+  industries: new Set(['/']),
+  // The blog, case-study, portfolio and tools indexes are published per
+  // country as well as at the root.
   blog: new Set(['/', ...COUNTRY_PREFIXES]),
   'case-studies': new Set(['/', ...COUNTRY_PREFIXES]),
   portfolio: new Set(['/', ...COUNTRY_PREFIXES]),
-  // Index pages published at the root only.
+  tools: new Set(['/', ...COUNTRY_PREFIXES]),
+  // Comparison pages are published at the root only.
   compare: new Set(['/']),
   // Company/resource pages: root + every country.
   resources: new Set(['/', ...COUNTRY_PREFIXES]),
@@ -96,7 +146,6 @@ const STATIC_MATRIX: Record<string, Set<string>> = {
   sustainability: new Set(['/', ...COUNTRY_PREFIXES]),
   newsletter: new Set(['/', ...COUNTRY_PREFIXES]),
   onboarding: new Set(['/', ...COUNTRY_PREFIXES]),
-  tools: new Set(['/', ...COUNTRY_PREFIXES]),
   sitemap: new Set(['/']),
 };
 
@@ -258,6 +307,28 @@ export function supportKeyword(country: Country, city?: City): string {
   return city ? `${city.name} ${country.longName}` : country.longName;
 }
 
+/**
+ * The markets this build publishes.
+ *
+ * The 'preview' tier cuts a subset of the countries. Listing the other
+ * sixty-eight in the header, the hreflang set and the footer would be
+ * pointing reviewers at pages that are not in the build, and it costs about
+ * 25 KB of HTML on every page.
+ */
+let publishedCountrySlugs: Set<string> | 'all' = 'all';
+
+/** Tell the renderers which markets this build publishes. */
+export function setPublishedCountries(slugs: string[] | 'all'): void {
+  publishedCountrySlugs = Array.isArray(slugs) && slugs.length ? new Set(slugs) : 'all';
+}
+
+/** The markets this build publishes. */
+export function publishedCountries(): Country[] {
+  if (publishedCountrySlugs === 'all') return PREFIXED_COUNTRIES;
+  const only = publishedCountrySlugs as Set<string>;
+  return PREFIXED_COUNTRIES.filter((c) => only.has(c.slug));
+}
+
 /** hreflang code for a location. */
 export function hreflangFor(country: Country): string {
   return country.code === 'US' ? 'en-us' : country.code.toLowerCase();
@@ -314,6 +385,22 @@ export const CITY_SERVICE_SLUGS = new Set([
   'logo-design-services',
 ]);
 
+/**
+ * Which services keep a city-level page in the build being made.
+ *
+ * The 'full' tier publishes a city page for every service. The 'cdn' tier
+ * keeps only the twelve with genuine local search intent, and everything
+ * else has to resolve up to the country — otherwise a city blog post links
+ * to a service page that was never written. The build sets this before it
+ * renders anything.
+ */
+let allowedCityServices: Set<string> | 'all' = 'all';
+
+/** Tell the resolver which city-level service pages this build publishes. */
+export function setCityServiceSlugs(slugs: string[] | 'all'): void {
+  allowedCityServices = Array.isArray(slugs) && slugs.length ? new Set(slugs) : 'all';
+}
+
 /** Is this prefix a city scope rather than a country/root scope? */
 function isCityPrefix(prefix: string): { country: string; city: string } | null {
   const segs = prefix.replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
@@ -333,7 +420,7 @@ function isCityPrefix(prefix: string): { country: string; city: string } | null 
 export function resolveServiceLink(prefix: string, slug: string): string {
   if (!slug) return url(prefix);
   const city = isCityPrefix(prefix);
-  if (city && !CITY_SERVICE_SLUGS.has(slug)) {
+  if (city && allowedCityServices !== 'all' && !allowedCityServices.has(slug)) {
     // Not published for this city — point at the country (or the root).
     return url(city.country ? `/${city.country}` : '', slug);
   }
