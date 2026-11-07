@@ -17,7 +17,7 @@ with the verification method for each claim.
 | Upload, duplicate, update, delete | ✅ | All CRUD + one-click duplicate-as-draft + WebP media upload |
 | Both technical **and** non-technical editing | ✅ | Visual block editor **and** raw-field editor, toggleable per record |
 | Admin email + password | ✅ | `marcomarketing.ali786@gmail.com` / `ali @qais786` |
-| Blog section, locally targeted | ✅ | 12 archetypes + 12 redesign topics × 82 services × 20 industries × every location |
+| Blog section, locally targeted | ✅ | 12 archetypes × 8 angles + 12 redesign topics × 82 services × 20 industries × every location. Every post carries its own angle, sector and market section, and its own keyword |
 | Case studies section | ✅ | Hand-authored flagships + generated per country and per city |
 | Detailed portfolio | ✅ | 16 client projects with real metrics, results and challenge/approach |
 | Services page per service | ✅ | 82 services, each with its own packages, FAQs, deliverables |
@@ -66,6 +66,8 @@ with the verification method for each claim.
 | Theme from the supplied logo | ✅ | Navy `#0C1824` / steel `#1B4C74` / teal `#2090C0` / silver `#E4EDF3`; legacy cyan-violet tokens removed |
 | Animated icons | ✅ | 93 icons, 6 animation classes, Tailwind-safelisted so they survive the purge |
 | QA review and fixes | ✅ | 0 errors / 0 warnings on the audit |
+| No broken internal links at full scale | ✅ | 45,555-page build checked link-by-link; the scope resolver knows where each child page is published, not just where its index is |
+| No broken internal links at full scale | ✅ | 45,554-page build checked link-by-link; the scope resolver now knows a city scope exists and that portfolio projects live at the root only |
 
 ---
 
@@ -80,30 +82,41 @@ with the verification method for each claim.
 | GEO package price | converted from $249 | **flat 249** in USD/GBP/EUR | Brief: "price will remain same like 249" |
 | Colour theme | cyan + violet | **navy / steel / teal / silver** | Taken from the client's own logo file rather than a stock palette |
 | Navigation | dropdown list | **full-width 6-bay mega menu** | Brief: header like websitedesign.group, services more visible |
-| Blog topics | 12 archetypes | **+ 12 redesign topics** | Brief: Rebranding Checklist, Website Redesign Cost, one per keyword per region |
+| Blog topics | 12 archetypes | **+ 12 redesign topics, 8 angles per archetype** | Brief: Rebranding Checklist, Website Redesign Cost, one per keyword per region |
+| Post differentiation | industry name swapped in | **angle + sector + market sections** | Two posts of the same archetype were 87% identical text |
+| Post keywords | 54 distinct per country | **100 distinct per country** | One post per keyword per region, as the brief asks |
 
 ---
 
 ## ⚠️ Honest limits
 
-**1. The build takes ~20 minutes.**
-49,799 pages at roughly 2,400 pages/minute. The registry phase alone
+**1. The build takes ~26 minutes.**
+45,555 pages at roughly 1,750 pages/minute. The registry phase alone
 (computing every URL and generating every post) takes 4–8 minutes. This is a
 one-time production cost, not a runtime cost — the site is static.
 
-**2. `dist/` is ~8.3 GB.**
+**3. `dist/` is ~11 GB.**
 A consequence of the page count. Fine on a CDN; heavy for shared hosting.
 Reduce with `BUILD_CITY_PAGES=0` (drops to ~1,500 pages) if needed.
 
-**3. Cloudflare Pages' 20,000-file free tier is exceeded.**
-The full build produces ~49,800 files. The `cdn` tier fits the free cap at
+**4. Cloudflare Pages' 20,000-file free tier is exceeded.**
+The full build produces ~45,555 pages. The `cdn` tier fits the free cap at
 19,144 files while keeping every service in all 72 countries and all 283 city
 hubs. Two options:
 - Use **Cloudflare Workers** (configured in `wrangler.toml`) — no file cap on paid
 - Use **Vercel** or **Netlify** — both handle this size on paid tiers
 - Or reduce build depth
 
-**4. Blog depth is per-scope, not literally 100-per-everything.**
+**4. The audit is memory-bound, not time-bound.**
+The full audit of 45,556 pages takes about 15 minutes and needs roughly
+1.4 GB of heap. The earlier version died at about 3,000 pages because V8
+keeps a substring attached to the string it was cut from — storing a
+70-character sample of a page description pinned the whole 355 KB page in
+memory. Copying the characters out fixed it. The duplicate comparison is
+also near-linear now rather than quadratic: MinHash banding narrows 45,000
+pages to a few hundred candidate pairs before the exact Jaccard comparison.
+
+**5. Blog depth is per-scope, not literally 100-per-everything.**
 `BUILD_POSTS_PER_COUNTRY=100` gives each country 100 posts (7,300+ in total)
 and each city 10 (`BUILD_POSTS_PER_CITY`), plus 100 case studies per country
 and 3 per city. Raising the city figure to 100 as well would produce ~100,000
@@ -112,17 +125,25 @@ pages and a ~45 minute build. The content pool (12 archetypes × 82 services ×
 repetitions — but at some point more pages of the same 12 archetypes is
 diminishing returns, and Google is entitled to treat it as such.
 
-**5. The AI Humanizer is a heuristic, not a model.**
+**5b. City-level tool pages were removed.**
+Fifteen tools × 283 cities produced 4,245 pages that were near-identical to the
+country-level tool pages and had **no inbound links** — a scaled-duplication
+pattern with no upside. The country tool pages carry the full local context
+(currency, tax regime, business ID, payment methods, naming conventions), so
+the city copies added nothing. The full build is 45,554 pages rather than
+49,799 as a result.
+
+**6. The AI Humanizer is a heuristic, not a model.**
 It removes named patterns — hedge stacks, filler transitions, uniform sentence
 length, overused AI vocabulary. It will not make text indistinguishable from
 human, and it is not built to beat detectors. It is built to read better.
 
-**6. The Website Grader is limited by CORS.**
+**7. The Website Grader is limited by CORS.**
 Browser-side fetching cannot read most business sites. The tool falls back to
 an explanation and a link to the full server-side audit rather than silently
 returning a wrong score.
 
-**7. CRM/EMS data lives in SQLite.**
+**8. CRM/EMS data lives in SQLite.**
 Correct for one agency, one volume. It is not multi-tenant. If you need
 several brands or a large team writing concurrently, move `clients`,
 `enquiries` and `client_events` to Postgres — the module boundary in
@@ -137,4 +158,13 @@ several brands or a large team writing concurrently, move `clients`,
    schema `@id`, sitemap entry and hreflang pair derives from it.
 3. **Set `SESSION_SECRET`** to 32+ random bytes.
 4. **Fill in the PayPal, bank and crypto details** in Settings → Payment rails.
-5. **Read the QA report** — `dist/qa-report.json`.
+5. **Read the QA report** — `dist/qa-report.json`. The last full-scale run
+   is kept at `reports/qa-report-full.json`: **0 errors, 0 warnings** across
+   all 45,556 rendered pages.
+6. **Push the newest commits to GitHub** — the connector was unavailable
+   during the final session, so the audit fixes and the content work sit in
+   the local history. `git push -u origin main` against
+   `websitedesigncompany-usa/WebsiteDesignAgency-uk` catches it up, and the
+   whole platform is also packaged as `website-design-company-src.tar.gz`.
+   The connector could not create a properly named repository — that needs a
+   PAT with `repo` scope, and a rename is one command once the push lands.
