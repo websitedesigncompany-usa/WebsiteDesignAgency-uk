@@ -1,0 +1,99 @@
+{
+  "generatedAt": "2026-10-29T22:30:39.634Z",
+  "durationMs": 886101,
+  "pages": 45556,
+  "sitemapUrls": 45162,
+  "coverage": {
+    "schemaPages": 45555,
+    "withFaq": 42235,
+    "withProduct": 29155,
+    "withBreadcrumb": 45553,
+    "pctSchema": 100,
+    "pctFaq": 92.7,
+    "pctProduct": 64,
+    "pctBreadcrumb": 100
+  },
+  "totals": {
+    "errors": 0,
+    "warnings": 0,
+    "info": 3115,
+    "total": 3115
+  },
+  "byRule": {
+    "microdata.none": 3115
+  },
+  "issues": [
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/404.html",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/albany/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/algeria/algiers/case-studies/restaurant-food-algiers-website-design-services/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/algeria/algiers/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/algeria/blog/page/2/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/algeria/blog/page/3/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/algeria/blog/page/4/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/algeria/blog/page/5/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/algeria/blog/page/9/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/algeria/blog/page/8/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/algeria/blog/page/6/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/algeria/blog/page/7/",
+      "detail": "No itemprop microdata on the page"
+    }
+  ]
+}
