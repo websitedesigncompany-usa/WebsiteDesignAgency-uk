@@ -1,0 +1,86 @@
+name: Deploy to GitHub Pages
+
+# Publishes the site to GitHub Pages. The project site lives under
+# /WebsiteDesignAgency-uk/, so the build runs with SITE_BASE_PATH set and
+# every root-relative link is prefixed accordingly — while canonicals,
+# hreflang and the sitemaps stay on the real domain.
+#
+# The published set is a market subset: GitHub Pages caps a site at 1 GB and
+# 10,000 files, and the full build is 45,555 pages and 11 GB. Fourteen
+# countries and fourteen cities fit comfortably at ~590 MB and still show
+# every page type the platform produces.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the site
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NODE_OPTIONS: '--max-old-space-size=2300'
+      SITE_ORIGIN: 'https://www.websitedesigncompany.site'
+      SITE_BASE_PATH: '/WebsiteDesignAgency-uk'
+      BUILD_TIER: 'preview'
+      BUILD_PREVIEW_COUNTRIES: 'uk,uae,de,ksa,india,pk,ca,au,fr,es,it,nl,ie,singapore'
+      BUILD_PREVIEW_CITIES: 'london,manchester,dubai,abu-dhabi,berlin,munich,riyadh,jeddah,mumbai,delhi,toronto,sydney,paris,rome'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Audit
+        run: npx tsx src/build/qa.ts
+        env:
+          QA_SAMPLE: '0'
+          NODE_OPTIONS: '--max-old-space-size=1600'
+
+      # GitHub Pages serves the artifact as a static tree; without this the
+      # Jekyll build step would drop any path starting with an underscore.
+      - name: Disable Jekyll
+        run: touch dist/.nojekyll
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Publish
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          enablement: true
