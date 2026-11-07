@@ -1,0 +1,99 @@
+{
+  "generatedAt": "2026-11-07T18:28:46.365Z",
+  "durationMs": 6740,
+  "pages": 1020,
+  "sitemapUrls": 1001,
+  "coverage": {
+    "schemaPages": 1019,
+    "withFaq": 635,
+    "withProduct": 385,
+    "withBreadcrumb": 1017,
+    "pctSchema": 99.9,
+    "pctFaq": 62.3,
+    "pctProduct": 37.7,
+    "pctBreadcrumb": 99.7
+  },
+  "totals": {
+    "errors": 0,
+    "warnings": 0,
+    "info": 179,
+    "total": 179
+  },
+  "byRule": {
+    "microdata.none": 179
+  },
+  "issues": [
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/404.html",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/algeria/case-studies/nonprofits-algeria-social-media-optimization-algeria/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/au/case-studies/fitness-wellness-au-magento-development-au/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/ar/case-studies/saas-ar-magento-development-ar/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/austria/case-studies/restaurant-food-austria-magento-development-austria/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/bahrain/case-studies/beauty-cosmetics-bahrain-wix-squarespace-design-bahrain/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/bangladesh/case-studies/nonprofits-bangladesh-wix-squarespace-design-bangladesh/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/belgium/case-studies/fitness-wellness-belgium-wix-squarespace-design-belgium/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/br/case-studies/hospitality-tourism-br-wix-squarespace-design-br/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/ca/case-studies/automotive-ca-corporate-website-design-ca/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/cambodia/case-studies/automotive-cambodia-accessibility-compliance-services-cambodia/",
+      "detail": "No itemprop microdata on the page"
+    },
+    {
+      "severity": "info",
+      "rule": "microdata.none",
+      "path": "/case-studies/amelia-family-dental/",
+      "detail": "No itemprop microdata on the page"
+    }
+  ]
+}
