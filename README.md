@@ -5,11 +5,13 @@ A complete, launch-ready website for **Website Design Company** (trading as *Mar
 A multi-region digital agency platform: static-site generation for speed and SEO, plus a real
 backend, database, CMS and client dashboard.
 
+**Full-scale audit: 0 errors, 0 warnings across all 45,556 rendered pages.**
+
 ---
 
 ## What ships
 
-A multi-region agency platform: **49,799 static pages** plus a live Node API, CMS
+A multi-region agency platform: **45,554 static pages** plus a live Node API, CMS
 and CRM. 82 services × 72 countries × 283 cities, with regional clustering for
 every content type.
 
@@ -24,8 +26,8 @@ every content type.
 | CRM / EMS | `src/server/crm.ts` | Auto client profiles, enquiry inbox, timeline, pipeline |
 | Payments | PayPal · card-via-PayPal · US bank · USDT/BTC/ETH | **No Stripe** |
 | Free tools | 15 client-side widgets | Nothing uploaded; verified against a real DOM |
-| Blog posts | 10,170 | 100 per country + 10 per city, 12 archetypes + 12 redesign topics × 82 services × 20 industries |
-| Case studies | 1,734 | Flagships + 20 per country + 3 per city |
+| Blog posts | 9,933 | 100 per country + 10 per city; 12 archetypes × 8 angles + 12 redesign topics, each post carrying its own keyword, angle, sector and market section |
+| Case studies | 1,729 | Flagships + 20 per country + 3 per city; the narrative is composed from the sector, the service and the market |
 | Free tool pages | 5,325 | 15 tools × 356 location scopes |
 | Comparison pages | 361 | 5 comparisons + index, per country |
 | Build | Custom SSG | Sitemaps, robots.txt, llms.txt ×2, search index, SEO + QA reports |
@@ -84,7 +86,11 @@ N / N pages pass on-page checks
 ✓ 0 broken internal links across every rendered page
 ```
 
-**Independent QA audit** (`npm run qa`): 0 errors, 0 warnings.
+**Independent QA audit** (`npm run qa`): **0 errors, 0 warnings** across all
+45,556 rendered pages. It runs in about 15 minutes on this machine and its
+duplicate check compares every page against the pages that share its shape,
+so a country page is compared against its root twin as well as against its
+sibling countries.
 
 ---
 
@@ -158,19 +164,19 @@ BUILD_POSTS_PER_LOCATION=1 BUILD_CASES_PER_LOCATION=1 BUILD_CITY_PAGES=0 npm run
 npm run build
 
 # Cloudflare Pages / Workers Free — sized to the 20,000-file cap
-BUILD_TIER=cdn npm run build          # 19,144 files
+BUILD_TIER=cdn npm run build          # 19,386 files
 
 # Public review build — a small, self-consistent subset
-BUILD_TIER=preview npm run build      # 1,195 files
+BUILD_TIER=preview npm run build      # 1,019 files, 186 MB
 ```
 
 ### Build tiers
 
 | Tier | Files | Use |
 |---|---:|---|
-| `full` (default) | 49,799 | Cloudflare Workers **Paid** ($5/mo, 100k file cap), or a VPS |
-| `cdn` | 19,144 | Cloudflare Pages / Workers **Free** (20,000 file cap) |
-| `preview` | 1,195 | Public review link — anything outside the subset resolves to the canonical domain, so no 404s |
+| `full` (default) | 45,554 | Cloudflare Workers **Paid** ($5/mo, 100k file cap), or a VPS |
+| `cdn` | 19,386 | Cloudflare Pages / Workers **Free** (20,000 file cap) |
+| `preview` | 1,019 | Public review link — three countries, six cities, every page type. Anything outside the subset resolves to the canonical domain, so no 404s |
 
 | Variable | Default | Meaning |
 |---|---|---|
@@ -186,10 +192,10 @@ BUILD_TIER=preview npm run build      # 1,195 files
 | `DB_PATH` | `data/app.db` | SQLite file location |
 | `QA_SAMPLE` | 0 (all) | Audit only a stratified sample of N pages |
 
-> The full production build renders **49,799 pages** and takes roughly **50 minutes**
-> on this NAS-backed sandbox (closer to 20 minutes on a local SSD). The registry
-> phase — computing every URL and generating every post — is the slowest part at
-> 4–8 minutes on its own. `dist/` ends up at roughly **8.6 GB**.
+> The full production build renders **45,555 pages** in about **26 minutes** on this
+> NAS-backed sandbox (closer to 12 minutes on a local SSD). The registry phase —
+> computing every URL and generating every post — is the slowest part at 4–8
+> minutes on its own. `dist/` ends up at roughly **11 GB**.
 
 ---
 
@@ -518,7 +524,8 @@ admin password.
 - **balanced HTML** — every generated document is checked for unclosed tags
 - **duplicate content** — an 8-word shingle Jaccard comparison across pages
   that share a URL shape, so a country page cannot ship as a copy of another
-  country's page with the place name swapped
+  country's page with the place name swapped. Candidates are narrowed with
+  MinHash banding, so the comparison is near-linear rather than quadratic
 - **heading hierarchy** — no skipped levels anywhere in the document
 - **class coverage** — every class a page references must exist in the built
   stylesheet, catching Tailwind purging of runtime-composed class names
@@ -530,7 +537,16 @@ admin password.
 Results land in `dist/qa-report.json` with per-rule counts. The command exits
 non-zero on any error.
 
-**Current status on the production build: 0 errors, 0 warnings.**
+**Current status on the production build: 0 errors, 0 warnings** across all
+45,556 rendered pages. The report from that run is kept at
+`reports/qa-report-full.json`.
+
+The audit is deliberately memory-frugal. V8 represents a substring as a
+*sliced string* that points back at the string it was cut from, so storing a
+70-character sample of a page description quietly pins that whole page in
+memory — on a 45,000-page build that is roughly 16 GB of live documents and
+the audit dies at about 3,000 pages. Copying the characters out breaks the
+link, and the whole site now audits in a flat 30–60 MB heap.
 
 ---
 
